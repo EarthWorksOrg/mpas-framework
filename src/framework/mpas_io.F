@@ -5018,11 +5018,9 @@ module mpas_io
          case (MPAS_IO_ERR_UNINIT_HANDLE)
             call mpas_log_write('MPAS IO Error: Uninitialized I/O handle', MPAS_LOG_ERR)
          case (MPAS_IO_ERR_PIO)
-            !call mpas_log_write('MPAS IO Error: Bad return value from PIO', MPAS_LOG_ERR)
             ierr_local = PIO_strerror(pio_global_ierr, pio_string)
             call mpas_log_write('MPAS IO Error: PIO error $i: '//trim(pio_string), &
                                 messageType=MPAS_LOG_ERR, intArgs=[pio_global_ierr])
-
          case (MPAS_IO_ERR_DATA_MODE)
             call mpas_log_write('MPAS IO Error: Cannot define in data mode', MPAS_LOG_ERR)
          case (MPAS_IO_ERR_NOWRITE)
