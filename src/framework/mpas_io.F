@@ -45,7 +45,7 @@ module mpas_io
 #endif
 #endif
 
-   integer, private :: pio_global_ierr
+   integer, private :: pio_global_ierr = PIO_noerr
 
    interface MPAS_io_get_var
       module procedure MPAS_io_get_var_int0d
