@@ -15,6 +15,10 @@
       ! Store exchange group information here
       type (mpas_exchange_group), pointer :: exchangeGroups => null()
 
+      ! Storage for halo exchange groups
+      type (mpas_pool_type), pointer :: haloGroupPool => null()   ! Only used internally by mpas_halo module
+      type (mpas_halo_group), pointer :: haloGroups => null()     ! Head pointer of linked list of halo groups
+
       ! Domain specific constants
       logical :: on_a_sphere = .true.
       logical :: is_periodic = .false.
@@ -37,4 +41,7 @@
 
       ! Domain_type is a linked list
       type (domain_type), pointer :: next => null()
+
+      ! Intra-component coupler
+      type (mpas_coupler_type), pointer :: mpas_cpl => null()
    end type domain_type

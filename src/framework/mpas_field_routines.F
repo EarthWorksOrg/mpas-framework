@@ -987,6 +987,7 @@ module mpas_field_routines
              f_cursor => f
              do while(associated(f_cursor))
                if(associated(f_cursor % array)) then
+                 !$acc exit data finalize delete(f_cursor % array)
                  deallocate(f_cursor % array)
                end if
    
@@ -994,6 +995,7 @@ module mpas_field_routines
              end do
           else
              if(associated(f % array)) then
+                !$acc exit data finalize delete(f % array)
                 deallocate(f % array)
              end if
           end if
@@ -1037,6 +1039,7 @@ module mpas_field_routines
              f_cursor => f
              do while(associated(f_cursor))
                if(associated(f_cursor % array)) then
+                 !$acc exit data finalize delete(f_cursor % array)
                  deallocate(f_cursor % array)
                end if
    
@@ -1044,6 +1047,7 @@ module mpas_field_routines
              end do
           else
              if(associated(f % array)) then
+                !$acc exit data finalize delete(f % array)
                 deallocate(f % array)
              end if
           end if
@@ -1087,6 +1091,7 @@ module mpas_field_routines
              f_cursor => f
              do while(associated(f_cursor))
                if(associated(f_cursor % array)) then
+                 !$acc exit data finalize delete(f_cursor % array)
                  deallocate(f_cursor % array)
                end if
    
@@ -1094,6 +1099,7 @@ module mpas_field_routines
              end do
           else
              if(associated(f % array)) then
+                 !$acc exit data finalize delete(f % array)
                 deallocate(f % array)
              end if
           end if
@@ -1137,6 +1143,7 @@ module mpas_field_routines
              f_cursor => f
              do while(associated(f_cursor))
                if(associated(f_cursor % array)) then
+                 !$acc exit data finalize delete(f_cursor % array)
                  deallocate(f_cursor % array)
                end if
    
@@ -1144,6 +1151,7 @@ module mpas_field_routines
              end do
           else
              if(associated(f % array)) then
+                 !$acc exit data finalize delete(f_cursor % array)
                 deallocate(f % array)
              end if
           end if
@@ -1187,6 +1195,7 @@ module mpas_field_routines
              f_cursor => f
              do while(associated(f_cursor))
                if(associated(f_cursor % array)) then
+                 !$acc exit data finalize delete(f_cursor % array)
                  deallocate(f_cursor % array)
                end if
    
@@ -1194,6 +1203,7 @@ module mpas_field_routines
              end do
           else
              if(associated(f % array)) then
+                 !$acc exit data finalize delete(f % array)
                 deallocate(f % array)
              end if
           end if
@@ -1237,6 +1247,7 @@ module mpas_field_routines
              f_cursor => f
              do while(associated(f_cursor))
                if(associated(f_cursor % array)) then
+                 !$acc exit data finalize delete(f_cursor % array)
                  deallocate(f_cursor % array)
                end if
    
@@ -1244,6 +1255,7 @@ module mpas_field_routines
              end do
           else
              if(associated(f % array)) then
+                !$acc exit data finalize delete(f % array)
                 deallocate(f % array)
              end if
           end if
@@ -1287,6 +1299,7 @@ module mpas_field_routines
              f_cursor => f
              do while(associated(f_cursor))
                if(associated(f_cursor % array)) then
+                 !$acc exit data finalize delete(f_cursor % array)
                  deallocate(f_cursor % array)
                end if
    
@@ -1294,6 +1307,7 @@ module mpas_field_routines
              end do
           else
              if(associated(f % array)) then
+                !$acc exit data finalize delete(f % array)
                 deallocate(f % array)
              end if
           end if
@@ -1337,6 +1351,7 @@ module mpas_field_routines
              f_cursor => f
              do while(associated(f_cursor))
                if(associated(f_cursor % array)) then
+                 !$acc exit data finalize delete(f_cursor % array)
                  deallocate(f_cursor % array)
                end if
    
@@ -1344,6 +1359,7 @@ module mpas_field_routines
              end do
           else
              if(associated(f % array)) then
+                !$acc exit data finalize delete(f % array)
                 deallocate(f % array)
              end if
           end if
@@ -1387,6 +1403,7 @@ module mpas_field_routines
              f_cursor => f
              do while(associated(f_cursor))
                if(associated(f_cursor % array)) then
+                 !$acc exit data finalize delete(f_cursor % array)
                  deallocate(f_cursor % array)
                end if
    
@@ -1394,6 +1411,7 @@ module mpas_field_routines
              end do
           else
              if(associated(f % array)) then
+                !$acc exit data finalize delete(f % array)
                 deallocate(f % array)
              end if
           end if

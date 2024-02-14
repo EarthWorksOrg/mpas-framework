@@ -1,4 +1,4 @@
-   abstract interface
+abstract interface
       function mpas_setup_namelist_function(configs, namelistFilename, dminfo) result(iErr)
          use mpas_kind_types
          import mpas_pool_type
@@ -23,7 +23,7 @@
    abstract interface
       function mpas_setup_packages_function(configs, packages, iocontext) result(iErr)
          import mpas_pool_type
-		 import mpas_io_context_type
+         import mpas_io_context_type
 
          type (mpas_pool_type), intent(inout) :: configs
          type (mpas_pool_type), intent(inout) :: packages
@@ -106,15 +106,15 @@
 
    abstract interface
       function mpas_setup_decomposed_dimensions_function(block, streamManager, readDimensions, dimensionPool, totalBlocks) result(iErr)
-		 import block_type
-		 import mpas_streamManager_type
+         import block_type
+         import mpas_streamManager_type
          import mpas_pool_type
 
-		 type (block_type), intent(inout) :: block
-		 type (mpas_streamManager_type), intent(inout) :: streamManager
+         type (block_type), intent(inout) :: block
+         type (mpas_streamManager_type), intent(inout) :: streamManager
          type (mpas_pool_type), intent(inout) :: readDimensions
          type (mpas_pool_type), intent(inout) :: dimensionPool
-		 integer, intent(in) :: totalBlocks
+         integer, intent(in) :: totalBlocks
          integer :: iErr
       end function mpas_setup_decomposed_dimensions_function
    end interface
@@ -174,6 +174,12 @@
       procedure (mpas_setup_immutable_streams_function), pointer, nopass :: setup_immutable_streams => null()
       procedure (mpas_setup_derived_dimensions_function), pointer, nopass :: setup_derived_dimensions => null()
       procedure (mpas_setup_decomposed_dimensions_function), pointer, nopass :: setup_decomposed_dimensions => null()
+
+      ! Core component role function pointers
+      procedure (mpas_coupler_role_function), pointer, nopass :: component_role
+      procedure (mpas_coupler_roleleader_function), pointer, nopass :: component_role_leader
+      procedure (mpas_coupler_role_is_function), pointer, nopass :: component_role_is
+      procedure (mpas_coupler_role_incl_function), pointer, nopass :: component_role_includes
 
       ! core_type is a linked list
       type (core_type), pointer :: next => null()
