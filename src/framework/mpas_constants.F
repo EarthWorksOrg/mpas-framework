@@ -30,9 +30,9 @@ module mpas_constants
    use physconst, only : cp => cpair
    use physconst, only : rgas => rair
    use physconst, only : rv => rh2o
-   real (kind=RKIND) :: rvord = huge(1.0_RKIND)                       ! Derived in mpas_constants_compute_derived
-   real (kind=RKIND) :: cv = huge(1.0_RKIND)                          ! Derived in mpas_constants_compute_derived
-   real (kind=RKIND) :: cvpm = huge(1.0_RKIND)                        ! Derived in mpas_constants_compute_derived
+   real (kind=RKIND) :: rvord = huge(1.0_RKIND)                       ! Derived in dummy
+   real (kind=RKIND) :: cv = huge(1.0_RKIND)                          ! Derived in dummy
+   real (kind=RKIND) :: cvpm = huge(1.0_RKIND)                        ! Derived in dummy
 #else
    real (kind=RKIND), parameter :: pii     = 3.141592653589793_RKIND  !< Constant: Pi
    real (kind=RKIND), parameter :: a       = 6371229.0_RKIND          !< Constant: Spherical Earth radius [m]
@@ -54,7 +54,7 @@ module mpas_constants
 
 !***********************************************************************
 !
-!  mpas_constants_compute_derived
+!  dummy
 !
 !> \brief   Computes derived constants
 !> \author  Michael Duda
@@ -72,7 +72,7 @@ module mpas_constants
 !>  its core_init routine.
 !
 !-----------------------------------------------------------------------
-   subroutine mpas_constants_compute_derived()
+   subroutine dummy()
 
        implicit none
 
@@ -88,6 +88,6 @@ module mpas_constants
        cvpm    = -cv / cp
 #endif
 
-   end subroutine mpas_constants_compute_derived
+   end subroutine dummy
 
 end module mpas_constants
