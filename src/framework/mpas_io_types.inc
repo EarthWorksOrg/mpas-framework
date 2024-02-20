@@ -1,17 +1,7 @@
-#ifdef MPAS_PIO_SUPPORT
 #ifdef USE_PIO2
    integer, parameter :: MPAS_IO_OFFSET_KIND = PIO_OFFSET_KIND
 #else
    integer, parameter :: MPAS_IO_OFFSET_KIND = PIO_OFFSET
-#endif
-
-#else
-
-#ifdef MPAS_SMIOL_SUPPORT
-   integer, parameter :: MPAS_IO_OFFSET_KIND = SMIOL_offset_kind
-#else
-   integer, parameter :: MPAS_IO_OFFSET_KIND = I8KIND
-#endif
 #endif
 
    ! File access modes
@@ -49,7 +39,7 @@
                          MPAS_IO_ERR_INVALID_FORMAT = -2, &
                          MPAS_IO_ERR_LONG_FILENAME  = -3, &
                          MPAS_IO_ERR_UNINIT_HANDLE  = -4, &
-                         MPAS_IO_ERR_BACKEND        = -5, &
+                         MPAS_IO_ERR_PIO            = -5, &
                          MPAS_IO_ERR_DATA_MODE      = -6, &
                          MPAS_IO_ERR_NOWRITE        = -7, &
                          MPAS_IO_ERR_REDEF_DIM      = -8, &
@@ -72,12 +62,7 @@
       logical :: preexisting_file = .false.
       logical :: data_mode = .false.
       logical :: external_file_desc = .false.
-#ifdef MPAS_PIO_SUPPORT
       type (file_desc_t) :: pio_file
-#endif
-#ifdef MPAS_SMIOL_SUPPORT
-      type (SMIOLf_file), pointer :: smiol_file => null()
-#endif
       character (len=StrKIND) :: filename
       integer :: iomode
       integer :: ioformat
@@ -97,12 +82,7 @@
       integer :: field_type
       integer, dimension(:), pointer :: dims
       integer, dimension(:), pointer :: indices
-#ifdef MPAS_PIO_SUPPORT
       type (io_desc_t) :: pio_iodesc
-#endif
-#ifdef MPAS_SMIOL_SUPPORT
-      type (SMIOLf_decomp), pointer :: smiol_decomp => null()
-#endif
    end type decomphandle_type
 
    type atthandle_type
@@ -126,9 +106,7 @@
    type fieldhandle_type
       character (len=StrKIND) :: fieldname
       integer :: fieldid
-#ifdef MPAS_PIO_SUPPORT
       type (Var_desc_t) :: field_desc
-#endif
       integer :: field_type
       logical :: has_unlimited_dim = .false.
       integer :: ndims
@@ -161,12 +139,7 @@
 
    type mpas_io_context_type
       type (decomplist_type), pointer :: decomp_list => null()
-#ifdef MPAS_PIO_SUPPORT
       type (iosystem_desc_t), pointer :: pio_iosystem => null()
-#endif
-#ifdef MPAS_SMIOL_SUPPORT
-      type (SMIOLf_context), pointer :: smiol_context => null()
-#endif
       integer :: master_pio_iotype = -999
       type (dm_info), pointer :: dminfo => null()
    end type mpas_io_context_type
