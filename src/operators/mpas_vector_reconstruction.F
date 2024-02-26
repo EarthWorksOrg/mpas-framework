@@ -16,13 +16,13 @@
 !> This module provides routines for performing vector reconstruction from edges to cell centers.
 !
 !-----------------------------------------------------------------------
-module mpas_vector_reconstruction
+module MPASAOS_vector_reconstruction
 
-  use mpas_derived_types
-  use mpas_pool_routines
-  use mpas_constants
-  use mpas_rbf_interpolation
-  use mpas_vector_operations
+  use MPASAOS_derived_types
+  use MPASAOS_pool_routines
+  use MPASAOS_constants
+  use MPASAOS_rbf_interpolation
+  use MPASAOS_vector_operations
 
   implicit none
 
@@ -590,5 +590,5 @@ end subroutine mpas_reconstruct_2d_gpu_work
 
   end subroutine mpas_reconstruct_1d!}}}
 
-end module mpas_vector_reconstruction
+end module MPASAOS_vector_reconstruction
 

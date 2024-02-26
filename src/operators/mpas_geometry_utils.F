@@ -5,14 +5,14 @@
 ! Additional copyright and license information can be found in the LICENSE file
 ! distributed with this code, or at http://mpas-dev.github.com/license.html
 !
-module mpas_geometry_utils
+module MPASAOS_geometry_utils
 
-   use mpas_kind_types
-   use mpas_derived_types
-   use mpas_pool_routines
-   use mpas_constants
-   use mpas_vector_operations
-   use mpas_log
+   use MPASAOS_kind_types
+   use MPASAOS_derived_types
+   use MPASAOS_pool_routines
+   use MPASAOS_constants
+   use MPASAOS_vector_operations
+   use MPASAOS_log
 
    implicit none
 
@@ -237,7 +237,7 @@ module mpas_geometry_utils
 
    subroutine mpas_poly_fit_2(a_in,b_out,weights_in,m,n,ne)!{{{
 
-      use mpas_matrix_operations
+      use MPASAOS_matrix_operations
 
       implicit none
 
@@ -1866,4 +1866,4 @@ module mpas_geometry_utils
 
    end function mpas_in_cell
 
-end module mpas_geometry_utils
+end module MPASAOS_geometry_utils
