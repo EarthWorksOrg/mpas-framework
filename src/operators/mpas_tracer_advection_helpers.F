@@ -16,14 +16,14 @@
 !>  This module contains helper functions tracer advection.
 !
 !-----------------------------------------------------------------------
-module mpas_tracer_advection_helpers
+module MPASAOS_tracer_advection_helpers
 
-   use mpas_kind_types
-   use mpas_derived_types
-   use mpas_pool_routines
-   use mpas_sort
-   use mpas_geometry_utils
-   use mpas_log
+   use MPASAOS_kind_types
+   use MPASAOS_derived_types
+   use MPASAOS_pool_routines
+   use MPASAOS_sort
+   use MPASAOS_geometry_utils
+   use MPASAOS_log
 
    implicit none
    save
@@ -86,7 +86,7 @@ module mpas_tracer_advection_helpers
 !-----------------------------------------------------------------------
    subroutine mpas_tracer_advection_coefficients( meshPool, horiz_adv_order, deriv_two, adv_coefs, adv_coefs_3rd, nAdvCellsForEdge, advCellsForEdge, err, maxLevelCell_in, highOrderAdvectionMask_in, boundaryCell_in )!{{{
 
-      use mpas_hash
+      use MPASAOS_hash
 
       implicit none
       type (mpas_pool_type), intent(in) :: meshPool !< Input: Mesh information
@@ -721,5 +721,5 @@ module mpas_tracer_advection_helpers
 
    end subroutine mpas_initialize_deriv_two!}}}
 
-end module mpas_tracer_advection_helpers
+end module MPASAOS_tracer_advection_helpers
 

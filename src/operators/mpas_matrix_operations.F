@@ -16,12 +16,12 @@
 !>  This module contains the routines for matrix operations
 !
 !-----------------------------------------------------------------------
-module mpas_matrix_operations
+module MPASAOS_matrix_operations
 
-   use mpas_derived_types
-   use mpas_pool_routines
-   use mpas_constants
-   use mpas_log
+   use MPASAOS_derived_types
+   use MPASAOS_pool_routines
+   use MPASAOS_constants
+   use MPASAOS_log
 
    implicit none
    private
@@ -564,7 +564,7 @@ contains
    end subroutine mpas_elgs!}}}
 
 
-end module mpas_matrix_operations
+end module MPASAOS_matrix_operations
 
 !|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 ! vim: foldmethod=marker

@@ -16,12 +16,12 @@
 !>  This module contains the routines involving vector operations
 !
 !-----------------------------------------------------------------------
-module mpas_vector_operations
+module MPASAOS_vector_operations
 
-   use mpas_derived_types
-   use mpas_pool_routines
-   use mpas_constants
-   use mpas_log
+   use MPASAOS_derived_types
+   use MPASAOS_pool_routines
+   use MPASAOS_constants
+   use MPASAOS_log
 
    implicit none
    private
@@ -944,7 +944,7 @@ contains
 
    end subroutine mpas_unit_test_fix_periodicity!}}}
 
-end module mpas_vector_operations
+end module MPASAOS_vector_operations
 
 
 !|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

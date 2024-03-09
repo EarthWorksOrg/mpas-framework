@@ -17,10 +17,10 @@
 !> It performs interpolation of scalar and vector functions in 2 and 3 dimensions.
 !
 !-----------------------------------------------------------------------
-module mpas_rbf_interpolation
-   use mpas_dmpar
-   use mpas_derived_types
-   use mpas_vector_operations
+module MPASAOS_rbf_interpolation
+   use MPASAOS_dmpar
+   use MPASAOS_derived_types
+   use MPASAOS_vector_operations
 
    implicit none
    private
@@ -1845,5 +1845,5 @@ subroutine elgs (A,N,INDX)!{{{
 !
 END subroutine elgs!}}}
 
-end module mpas_rbf_interpolation
+end module MPASAOS_rbf_interpolation
 

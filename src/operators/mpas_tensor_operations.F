@@ -18,15 +18,15 @@
 !>  and a testing routine to verify these work properly.
 !
 !-----------------------------------------------------------------------
-module mpas_tensor_operations
+module MPASAOS_tensor_operations
 
-   use mpas_derived_types
-   use mpas_pool_routines
-   use mpas_constants
-   use mpas_vector_operations
-   use mpas_matrix_operations
-   use mpas_dmpar
-   use mpas_log
+   use MPASAOS_derived_types
+   use MPASAOS_pool_routines
+   use MPASAOS_constants
+   use MPASAOS_vector_operations
+   use MPASAOS_matrix_operations
+   use MPASAOS_dmpar
+   use MPASAOS_log
 
    implicit none
    private
@@ -1443,7 +1443,7 @@ contains
 
    end subroutine mpas_test_tensor!}}}
 
-end module mpas_tensor_operations
+end module MPASAOS_tensor_operations
 
 !|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 ! vim: foldmethod=marker
