@@ -16,9 +16,9 @@
 !> This module provides routines for performing spline interpolation.
 !
 !-----------------------------------------------------------------------
-module mpas_spline_interpolation
+module MPASAOS_spline_interpolation
 
-  use mpas_kind_types
+  use MPASAOS_kind_types
 
   implicit none
 
@@ -484,5 +484,5 @@ subroutine mpas_integrate_cubic_spline(x,y,y2ndDer,n,x1,x2,y_integral)  !{{{
 
   end subroutine mpas_test_interpolate!}}}
 
-end module mpas_spline_interpolation
+end module MPASAOS_spline_interpolation
 

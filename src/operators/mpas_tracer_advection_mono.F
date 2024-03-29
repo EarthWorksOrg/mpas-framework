@@ -16,14 +16,14 @@
 !>  This module contains routines for monotonic advection of tracers using a FCT
 !
 !-----------------------------------------------------------------------
-module mpas_tracer_advection_mono
+module MPASAOS_tracer_advection_mono
 
-   use mpas_kind_types
-   use mpas_derived_types
-   use mpas_pool_routines
-   use mpas_log
+   use MPASAOS_kind_types
+   use MPASAOS_derived_types
+   use MPASAOS_pool_routines
+   use MPASAOS_log
 
-   use mpas_tracer_advection_helpers
+   use MPASAOS_tracer_advection_helpers
 
    implicit none
    private
@@ -464,7 +464,7 @@ module mpas_tracer_advection_mono
 !-----------------------------------------------------------------------
    subroutine mpas_tracer_advection_mono_init(nHalos, horiz_adv_order, vert_adv_order, coef_3rd_order_in, dzdk_positive, check_monotonicity, err)!{{{
 
-      use mpas_dmpar
+      use MPASAOS_dmpar
       integer, intent(in) :: nHalos !< Input: number of halos in current simulation
       integer, intent(in) :: horiz_adv_order !< Input: Order for horizontal advection
       integer, intent(in) :: vert_adv_order !< Input: Order for vertical advection
@@ -507,5 +507,5 @@ module mpas_tracer_advection_mono
 
    end subroutine mpas_tracer_advection_mono_init!}}}
 
-end module mpas_tracer_advection_mono
+end module MPASAOS_tracer_advection_mono
 
