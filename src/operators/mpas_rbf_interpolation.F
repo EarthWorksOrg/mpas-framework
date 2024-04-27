@@ -59,7 +59,7 @@ module MPASAOS_rbf_interpolation
     mpas_rbf_interp_func_3D_plane_sca_lin_dir_comp_coeffs, &
     mpas_rbf_interp_func_3D_sca_lin_dir_comp_coeffs, &
     mpas_rbf_interp_func_3D_sca_const_dir_neu_comp_coeffs, &
-    mpas_rbf_interp_func_3D_plane_sca_lin_dir_neu_comp_coeffs, &
+!    mpas_rbf_interp_func_3D_plane_sca_lin_dir_neu_comp_coeffs, &
     mpas_rbf_interp_func_3D_sca_lin_dir_neu_comp_coeffs
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
@@ -102,8 +102,8 @@ module MPASAOS_rbf_interpolation
   !    for i = x,y,z
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
   public :: mpas_rbf_interp_func_3D_vec_const_dir_comp_coeffs, &
-    mpas_rbf_interp_func_3D_plane_vec_const_dir_comp_coeffs!, &
-    !mpas_rbf_interp_func_3D_vec_const_tan_neu_comp_coeffs, &
+    mpas_rbf_interp_func_3D_plane_vec_const_dir_comp_coeffs, &
+    mpas_rbf_interp_func_3D_vec_const_tan_neu_comp_coeffs!, &
     !mpas_rbf_interp_func_3D_plane_vec_const_tan_neu_comp_coeffs
 
   contains
@@ -785,71 +785,71 @@ module MPASAOS_rbf_interpolation
 !>   neumannCoefficients - the coefficients used to interpolate a function with Neumann
 !>     boundary conditions to the specified destinationPoint
 !-----------------------------------------------------------------------
-  subroutine mpas_rbf_interp_func_3D_plane_sca_lin_dir_neu_comp_coeffs( &!{{{
-    pointCount, sourcePoints, isInterface, interfaceNormals, destinationPoint, &
-    alpha, planeBasisVectors, dirichletCoefficients, neumannCoefficients)
-
-    integer, intent(in) :: pointCount !< Input: Number of points
-    real(kind=RKIND), dimension(pointCount,3), intent(in) :: sourcePoints !< Input: List of points
-    logical, dimension(pointCount), intent(in) :: isInterface !< Input: List of logicals determining if point is at an interface
-    real(kind=RKIND), dimension(pointCount,3), intent(in) :: interfaceNormals !< Input: List of interface normals
-    real(kind=RKIND), dimension(3), intent(in) :: destinationPoint !< Input: Destination point
-    real(kind=RKIND), intent(in) :: alpha !< Input: Characteristic length scale of RBFs
-    real(kind=RKIND), dimension(2,3) :: planeBasisVectors !< Input: Basis vectors for interpolation plane
-    real(kind=RKIND), dimension(pointCount), intent(out) :: dirichletCoefficients !< Output: List of Dirichlet coefficients
-    real(kind=RKIND), dimension(pointCount), intent(out) :: neumannCoefficients !< Output: List of Neumann coefficients
-
-    integer :: i
-    integer :: matrixSize
-
-    real(kind=RKIND), dimension(pointCount+3, pointCount+3) :: dirichletMatrix, neumannMatrix
-    real(kind=RKIND), dimension(pointCount+3) :: rhs, rhsCopy, coeffs
-    integer, dimension(pointCount+3) :: pivotIndices
-
-    matrixSize = pointCount+3 !! 3 extra space for constant and 2 planar dimensions
-
-    dirichletMatrix = 0.0
-    neumannMatrix = 0.0
-    rhs = 0.0
-    rhsCopy = 0.0
-    coeffs = 0.0
-
-    call mpas_set_up_scalar_rbf_matrix_and_rhs(pointCount, &
-      sourcePoints, isInterface, interfaceNormals, destinationPoint, &
-      alpha, dirichletMatrix(1:pointCount,1:pointCount), &
-      neumannMatrix(1:pointCount,1:pointCount), rhs(1:pointCount))
-
-    do i = 1, pointCount
-      dirichletMatrix(i,pointCount+1) = 1.0
-      dirichletMatrix(i,pointCount+2) = sum(sourcePoints(i,1:3)*planeBasisVectors(1,:))
-      dirichletMatrix(i,pointCount+3) = sum(sourcePoints(i,1:3)*planeBasisVectors(2,:))
-      if(isInterface(i)) then
-        neumannMatrix(i,pointCount+1) = 0.0
-        neumannMatrix(i,pointCount+2) = sum(interfaceNormals(i,1:3)*planeBasisVectors(1,:))
-        neumannMatrix(i,pointCount+3) = sum(interfaceNormals(i,1:3)*planeBasisVectors(2,:))
-      else
-        neumannMatrix(i,pointCount+1:pointCount+3) &
-          = dirichletMatrix(i,pointCount+1:pointCount+3)
-      end if
-      dirichletMatrix(pointCount+1:pointCount+3,i) &
-        = dirichletMatrix(i,pointCount+1:pointCount+3)
-      neumannMatrix(pointCount+1:pointCount+3,i) &
-        = neumannMatrix(i,pointCount+1:pointCount+3)
-    end do
-
-    rhs(pointCount+1) = 1.0
-    rhs(pointCount+2) = sum(destinationPoint(1:3)*planeBasisVectors(1,:))
-    rhs(pointCount+3) = sum(destinationPoint(1:3)*planeBasisVectors(2,:))
-
-    ! solve each linear system
-    rhsCopy = rhs
-    call mpas_legs(dirichletMatrix, matrixSize, rhs, coeffs, pivotIndices)
-    dirichletCoefficients = coeffs(1:pointCount)
-
-    call mpas_legs(neumannMatrix, matrixSize, rhsCopy, coeffs, pivotIndices)
-    neumannCoefficients = coeffs(1:pointCount)
-
-  end subroutine mpas_rbf_interp_func_3D_plane_sca_lin_dir_neu_comp_coeffs!}}}
+!  subroutine mpas_rbf_interp_func_3D_plane_sca_lin_dir_neu_comp_coeffs( &!{{{
+!    pointCount, sourcePoints, isInterface, interfaceNormals, destinationPoint, &
+!    alpha, planeBasisVectors, dirichletCoefficients, neumannCoefficients)
+!
+!    integer, intent(in) :: pointCount !< Input: Number of points
+!    real(kind=RKIND), dimension(pointCount,3), intent(in) :: sourcePoints !< Input: List of points
+!    logical, dimension(pointCount), intent(in) :: isInterface !< Input: List of logicals determining if point is at an interface
+!    real(kind=RKIND), dimension(pointCount,3), intent(in) :: interfaceNormals !< Input: List of interface normals
+!    real(kind=RKIND), dimension(3), intent(in) :: destinationPoint !< Input: Destination point
+!    real(kind=RKIND), intent(in) :: alpha !< Input: Characteristic length scale of RBFs
+!    real(kind=RKIND), dimension(2,3) :: planeBasisVectors !< Input: Basis vectors for interpolation plane
+!    real(kind=RKIND), dimension(pointCount), intent(out) :: dirichletCoefficients !< Output: List of Dirichlet coefficients
+!    real(kind=RKIND), dimension(pointCount), intent(out) :: neumannCoefficients !< Output: List of Neumann coefficients
+!
+!    integer :: i
+!    integer :: matrixSize
+!
+!    real(kind=RKIND), dimension(pointCount+3, pointCount+3) :: dirichletMatrix, neumannMatrix
+!    real(kind=RKIND), dimension(pointCount+3) :: rhs, rhsCopy, coeffs
+!    integer, dimension(pointCount+3) :: pivotIndices
+!
+!    matrixSize = pointCount+3 !! 3 extra space for constant and 2 planar dimensions
+!
+!    dirichletMatrix = 0.0
+!    neumannMatrix = 0.0
+!    rhs = 0.0
+!    rhsCopy = 0.0
+!    coeffs = 0.0
+!
+!    call mpas_set_up_scalar_rbf_matrix_and_rhs(pointCount, &
+!      sourcePoints, isInterface, interfaceNormals, destinationPoint, &
+!      alpha, dirichletMatrix(1:pointCount,1:pointCount), &
+!      neumannMatrix(1:pointCount,1:pointCount), rhs(1:pointCount))
+!
+!    do i = 1, pointCount
+!      dirichletMatrix(i,pointCount+1) = 1.0
+!      dirichletMatrix(i,pointCount+2) = sum(sourcePoints(i,1:3)*planeBasisVectors(1,:))
+!      dirichletMatrix(i,pointCount+3) = sum(sourcePoints(i,1:3)*planeBasisVectors(2,:))
+!      if(isInterface(i)) then
+!        neumannMatrix(i,pointCount+1) = 0.0
+!        neumannMatrix(i,pointCount+2) = sum(interfaceNormals(i,1:3)*planeBasisVectors(1,:))
+!        neumannMatrix(i,pointCount+3) = sum(interfaceNormals(i,1:3)*planeBasisVectors(2,:))
+!      else
+!        neumannMatrix(i,pointCount+1:pointCount+3) &
+!          = dirichletMatrix(i,pointCount+1:pointCount+3)
+!      end if
+!      dirichletMatrix(pointCount+1:pointCount+3,i) &
+!        = dirichletMatrix(i,pointCount+1:pointCount+3)
+!      neumannMatrix(pointCount+1:pointCount+3,i) &
+!        = neumannMatrix(i,pointCount+1:pointCount+3)
+!    end do
+!
+!    rhs(pointCount+1) = 1.0
+!    rhs(pointCount+2) = sum(destinationPoint(1:3)*planeBasisVectors(1,:))
+!    rhs(pointCount+3) = sum(destinationPoint(1:3)*planeBasisVectors(2,:))
+!
+!    ! solve each linear system
+!    rhsCopy = rhs
+!    call mpas_legs(dirichletMatrix, matrixSize, rhs, coeffs, pivotIndices)
+!    dirichletCoefficients = coeffs(1:pointCount)
+!
+!    call mpas_legs(neumannMatrix, matrixSize, rhsCopy, coeffs, pivotIndices)
+!    neumannCoefficients = coeffs(1:pointCount)
+!
+!  end subroutine mpas_rbf_interp_func_3D_plane_sca_lin_dir_neu_comp_coeffs!}}}
 
 !***********************************************************************
 !
@@ -1283,73 +1283,73 @@ module MPASAOS_rbf_interpolation
 !>     boundary conditions to the specified destinationPoint
 !-----------------------------------------------------------------------
 
-  subroutine mpas_rbf_interp_func_3D_plane_vec_const_tan_neu_comp_coeffs(&!{{{
-    pointCount, sourcePoints, isTangentToInterface, normalVectorIndex, unitVectors, &
-    destinationPoint, alpha, planeBasisVectors, coefficients)
-
-    integer, intent(in) :: pointCount !< input: Number of points
-    real(kind=RKIND), dimension(pointCount,3), intent(in) :: sourcePoints !< Input: List of points
-    logical, dimension(pointCount), intent(in) :: isTangentToInterface !< Input: List of logicals determining if point is tangent to interface
-    integer, dimension(pointCount), intent(in) :: normalVectorIndex !< Input: Index for normal vectors
-    real(kind=RKIND), dimension(pointCount,3), intent(in) :: unitVectors !< Input: List of unit vectors
-    real(kind=RKIND), dimension(3), intent(in) :: destinationPoint !< Input: Destination point
-    real(kind=RKIND), intent(in) :: alpha !< Input: Characteristic length scale of RBFs
-    real(kind=RKIND), dimension(2,3), intent(in) :: planeBasisVectors !< Input: Basis vectors for interpolation plane
-    real(kind=RKIND), dimension(pointCount, 3), intent(out) :: coefficients !< Output: List of coefficients
-
-    integer :: i
-    integer :: matrixSize
-
-    real(kind=RKIND), dimension(pointCount,2) :: planarSourcePoints
-    real(kind=RKIND), dimension(pointCount,2) :: planarUnitVectors
-    real(kind=RKIND), dimension(2) :: planarDestinationPoint
-
-    real(kind=RKIND), dimension(pointCount+2, pointCount+2) :: matrix, matrixCopy
-    real(kind=RKIND), dimension(pointCount+2, 2) :: rhs, coeffs
-    integer, dimension(pointCount+2) :: pivotIndices
-
-    matrixSize = pointCount+2 ! space for constant vector in plane
-
-    matrix = 0.0
-    rhs = 0.0
-    coeffs = 0.0
-
-    do i = 1, pointCount
-      planarSourcePoints(i,1) = sum(sourcePoints(i,:)*planeBasisVectors(1,:)) 
-      planarSourcePoints(i,2) = sum(sourcePoints(i,:)*planeBasisVectors(2,:)) 
-      planarUnitVectors(i,1) = sum(unitVectors(i,:)*planeBasisVectors(1,:)) 
-      planarUnitVectors(i,2) = sum(unitVectors(i,:)*planeBasisVectors(2,:)) 
-    end do
-    planarDestinationPoint(1) = sum(destinationPoint*planeBasisVectors(1,:)) 
-    planarDestinationPoint(2) = sum(destinationPoint*planeBasisVectors(2,:)) 
-    call mpas_set_up_vector_free_slip_rbf_matrix_and_rhs(pointCount, 2, &
-      planarSourcePoints, isTangentToInterface, normalVectorIndex, planarUnitVectors, &
-      planarDestinationPoint, alpha, matrix(1:pointCount,1:pointCount), rhs(1:pointCount,:))
-
-    do i = 1, pointCount
-      matrix(pointCount+1,i) = sum(unitVectors(i,:)*planeBasisVectors(1,:))
-      matrix(pointCount+2,i) = sum(unitVectors(i,:)*planeBasisVectors(2,:))
-      if(.not. isTangentToInterface(i)) then
-        matrix(i,pointCount+1:pointCount+2) = matrix(pointCount+1:pointCount+2,i)
-      end if
-    end do
-    do i = 1,2 
-      rhs(pointCount+i,i) = 1.0 ! the unit vector in the ith direction
-    end do
-
-    ! solve each linear system
-    matrixCopy = matrix
-    call mpas_legs(matrix, matrixSize, rhs(:,1), coeffs(:,1), pivotIndices)
-    call mpas_legs(matrixCopy, matrixSize, rhs(:,2), coeffs(:,2), pivotIndices)
-
-    coefficients(:,1) = planeBasisVectors(1,1)*coeffs(1:pointCount,1) &
-      + planeBasisVectors(2,1)*coeffs(1:pointCount,2) 
-    coefficients(:,2) = planeBasisVectors(1,2)*coeffs(1:pointCount,1) &
-      + planeBasisVectors(2,2)*coeffs(1:pointCount,2) 
-    coefficients(:,3) = planeBasisVectors(1,3)*coeffs(1:pointCount,1) &
-      + planeBasisVectors(2,3)*coeffs(1:pointCount,2) 
-
-   end subroutine mpas_rbf_interp_func_3D_plane_vec_const_tan_neu_comp_coeffs !}}}
+!  subroutine mpas_rbf_interp_func_3D_plane_vec_const_tan_neu_comp_coeffs(&!{{{
+!    pointCount, sourcePoints, isTangentToInterface, normalVectorIndex, unitVectors, &
+!    destinationPoint, alpha, planeBasisVectors, coefficients)
+!
+!    integer, intent(in) :: pointCount !< input: Number of points
+!    real(kind=RKIND), dimension(pointCount,3), intent(in) :: sourcePoints !< Input: List of points
+!    logical, dimension(pointCount), intent(in) :: isTangentToInterface !< Input: List of logicals determining if point is tangent to interface
+!    integer, dimension(pointCount), intent(in) :: normalVectorIndex !< Input: Index for normal vectors
+!    real(kind=RKIND), dimension(pointCount,3), intent(in) :: unitVectors !< Input: List of unit vectors
+!    real(kind=RKIND), dimension(3), intent(in) :: destinationPoint !< Input: Destination point
+!    real(kind=RKIND), intent(in) :: alpha !< Input: Characteristic length scale of RBFs
+!    real(kind=RKIND), dimension(2,3), intent(in) :: planeBasisVectors !< Input: Basis vectors for interpolation plane
+!    real(kind=RKIND), dimension(pointCount, 3), intent(out) :: coefficients !< Output: List of coefficients
+!
+!    integer :: i
+!    integer :: matrixSize
+!
+!    real(kind=RKIND), dimension(pointCount,2) :: planarSourcePoints
+!    real(kind=RKIND), dimension(pointCount,2) :: planarUnitVectors
+!    real(kind=RKIND), dimension(2) :: planarDestinationPoint
+!
+!    real(kind=RKIND), dimension(pointCount+2, pointCount+2) :: matrix, matrixCopy
+!    real(kind=RKIND), dimension(pointCount+2, 2) :: rhs, coeffs
+!    integer, dimension(pointCount+2) :: pivotIndices
+!
+!    matrixSize = pointCount+2 ! space for constant vector in plane
+!
+!    matrix = 0.0
+!    rhs = 0.0
+!    coeffs = 0.0
+!
+!    do i = 1, pointCount
+!      planarSourcePoints(i,1) = sum(sourcePoints(i,:)*planeBasisVectors(1,:)) 
+!      planarSourcePoints(i,2) = sum(sourcePoints(i,:)*planeBasisVectors(2,:)) 
+!      planarUnitVectors(i,1) = sum(unitVectors(i,:)*planeBasisVectors(1,:)) 
+!      planarUnitVectors(i,2) = sum(unitVectors(i,:)*planeBasisVectors(2,:)) 
+!    end do
+!    planarDestinationPoint(1) = sum(destinationPoint*planeBasisVectors(1,:)) 
+!    planarDestinationPoint(2) = sum(destinationPoint*planeBasisVectors(2,:)) 
+!    call mpas_set_up_vector_free_slip_rbf_matrix_and_rhs(pointCount, 2, &
+!      planarSourcePoints, isTangentToInterface, normalVectorIndex, planarUnitVectors, &
+!      planarDestinationPoint, alpha, matrix(1:pointCount,1:pointCount), rhs(1:pointCount,:))
+!
+!    do i = 1, pointCount
+!      matrix(pointCount+1,i) = sum(unitVectors(i,:)*planeBasisVectors(1,:))
+!      matrix(pointCount+2,i) = sum(unitVectors(i,:)*planeBasisVectors(2,:))
+!      if(.not. isTangentToInterface(i)) then
+!        matrix(i,pointCount+1:pointCount+2) = matrix(pointCount+1:pointCount+2,i)
+!      end if
+!    end do
+!    do i = 1,2 
+!      rhs(pointCount+i,i) = 1.0 ! the unit vector in the ith direction
+!    end do
+!
+!    ! solve each linear system
+!    matrixCopy = matrix
+!    call mpas_legs(matrix, matrixSize, rhs(:,1), coeffs(:,1), pivotIndices)
+!    call mpas_legs(matrixCopy, matrixSize, rhs(:,2), coeffs(:,2), pivotIndices)
+!
+!    coefficients(:,1) = planeBasisVectors(1,1)*coeffs(1:pointCount,1) &
+!      + planeBasisVectors(2,1)*coeffs(1:pointCount,2) 
+!    coefficients(:,2) = planeBasisVectors(1,2)*coeffs(1:pointCount,1) &
+!      + planeBasisVectors(2,2)*coeffs(1:pointCount,2) 
+!    coefficients(:,3) = planeBasisVectors(1,3)*coeffs(1:pointCount,1) &
+!      + planeBasisVectors(2,3)*coeffs(1:pointCount,2) 
+!
+!   end subroutine mpas_rbf_interp_func_3D_plane_vec_const_tan_neu_comp_coeffs !}}}
 
 
 !!!!!!!!!!!!!!!!!!!!!
