@@ -16,14 +16,14 @@
 !>  This module contains routines for standard advection of tracers
 !
 !-----------------------------------------------------------------------
-module mpas_tracer_advection_std
+module MPASAOS_tracer_advection_std
 
-   use mpas_kind_types
-   use mpas_derived_types
-   use mpas_pool_routines
-   use mpas_log
+   use MPASAOS_kind_types
+   use MPASAOS_derived_types
+   use MPASAOS_pool_routines
+   use MPASAOS_log
 
-   use mpas_tracer_advection_helpers
+   use MPASAOS_tracer_advection_helpers
 
    implicit none
    private
@@ -308,5 +308,5 @@ module mpas_tracer_advection_std
 
    end subroutine mpas_tracer_advection_std_init!}}}
 
-end module mpas_tracer_advection_std
+end module MPASAOS_tracer_advection_std
 

@@ -1,4 +1,3 @@
-   ! Derived type for storing list of blocks from a domain to be handled by a process
    type domain_type
       type (block_type), pointer :: blocklist
       type (mpas_pool_type), pointer :: configs, packages
@@ -14,10 +13,6 @@
 
       ! Store exchange group information here
       type (mpas_exchange_group), pointer :: exchangeGroups => null()
-
-      ! Storage for halo exchange groups
-      type (mpas_pool_type), pointer :: haloGroupPool => null()   ! Only used internally by mpas_halo module
-      type (mpas_halo_group), pointer :: haloGroups => null()     ! Head pointer of linked list of halo groups
 
       ! Domain specific constants
       logical :: on_a_sphere = .true.
@@ -45,3 +40,22 @@
       ! Intra-component coupler
       type (mpas_coupler_type), pointer :: mpas_cpl => null()
    end type domain_type
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
