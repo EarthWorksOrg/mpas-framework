@@ -3,7 +3,7 @@
 !
 ! Unless noted otherwise source code is licensed under the BSD license.
 ! Additional copyright and license information can be found in the LICENSE file
-! distributed with this code, or at http://mpas-dev.github.com/license.html
+! distributed with this code, or at http://mpas-dev.github.io/license.html
 !
 module MPASAOS_bootstrapping
 
@@ -76,16 +76,13 @@ module MPASAOS_bootstrapping
    !>            mpas_initialize_vectors()
    !
    !-----------------------------------------------------------------------
-   subroutine mpas_bootstrap_framework_phase1(domain, mesh_filename, mesh_iotype, pio_file_desc) !{{{
-
-      use pio, only : file_desc_t
+   subroutine mpas_bootstrap_framework_phase1(domain, mesh_filename, mesh_iotype) !{{{
 
       implicit none
 
       type (domain_type), pointer :: domain
       character(len=*), intent(in) :: mesh_filename
       integer, intent(in) :: mesh_iotype
-      type (file_desc_t), intent(inout), optional :: pio_file_desc
 
       type (block_type), pointer :: readingBlock
 
@@ -150,8 +147,7 @@ module MPASAOS_bootstrapping
       nHalos = config_num_halos
 
 
-      inputHandle = MPAS_io_open(trim(mesh_filename), MPAS_IO_READ, mesh_iotype, domain % ioContext, &
-                                 pio_file_desc=pio_file_desc, ierr=ierr)
+      inputHandle = MPAS_io_open(trim(mesh_filename), MPAS_IO_READ, mesh_iotype, domain % ioContext, ierr=ierr)
       if (ierr /= MPAS_IO_NOERR) then
          call mpas_log_write('Could not open input file '''//trim(mesh_filename)//''' to read mesh fields', MPAS_LOG_CRIT)
       else
@@ -441,26 +437,34 @@ module MPASAOS_bootstrapping
    !>  and allocating all fields and structs.
    !
    !-----------------------------------------------------------------------
-   subroutine mpas_bootstrap_framework_phase2(domain, pio_file_desc) !{{{
+   subroutine mpas_bootstrap_framework_phase2(domain) !{{{
 
       use MPASAOS_stream_manager
       use MPASAOS_stream_list
-      use pio, only : file_desc_t
 
       implicit none
 
       type (domain_type), pointer :: domain
-      type (file_desc_t), intent(inout), optional :: pio_file_desc
 
       type (mpas_pool_type), pointer :: readableDimensions
       type (mpas_pool_type), pointer :: streamDimensions
 
       character (len=StrKIND) :: streamName, streamFilenameTemplate, streamFilenameInterval, streamReferenceTime, streamFilename
-      character (len=StrKIND) :: fieldName
+      character (len=StrKIND) :: fieldName, maskName
       integer :: streamDirection
       logical :: streamActive
       logical :: fieldActive
       integer :: ioType
+
+      type (mpas_pool_field_info_type) :: fieldInfo, maskInfo
+      type (field1DInteger), pointer :: int1DMask
+      type (field2DInteger), pointer :: int2DMask
+      type (field3DInteger), pointer :: int3DMask
+      type (field1DReal), pointer :: real1DField
+      type (field2DReal), pointer :: real2DField
+      type (field3DReal), pointer :: real3DField
+      type (field4DReal), pointer :: real4DField
+      type (field5DReal), pointer :: real5DField
 
       type (mpas_pool_iterator_type) :: poolItr
 
@@ -469,7 +473,7 @@ module MPASAOS_bootstrapping
       character (len=StrKIND), dimension(:), pointer :: dimNames
       integer, pointer :: dimValue
       integer :: tempDim
-      integer :: i, err_level, err_local
+      integer :: i, j, err_level, err_local
 
 
       call mpas_pool_create_pool(readableDimensions)
@@ -480,183 +484,358 @@ module MPASAOS_bootstrapping
       call mpas_log_write(' ')
       call mpas_log_write(' ')
 
-      if (present(pio_file_desc)) then
-         call mpas_log_write('Reading dimensions from external PIO file handle ...')
+      ! Reading dimensions from streams
+      call mpas_log_write('Reading dimensions from input streams ...')
+      call mpas_stream_mgr_begin_iteration(domain % streamManager)
+      do while ( mpas_stream_mgr_get_next_stream(domain % streamManager, streamID = streamName, directionProperty = streamDirection, &
+                                                 activeProperty = streamActive) )
 
-         ! Build stream dimension pool from the list of fields
-         call mpas_pool_create_pool(streamDimensions)
+         if ( streamActive .and. ( streamDirection == MPAS_STREAM_INPUT .or. streamDirection == MPAS_STREAM_INPUT_OUTPUT ) ) then
 
-         call mpas_pool_begin_iteration(domain % blocklist % allFields)
-         do while ( mpas_pool_get_next_member(domain % blocklist % allFields, poolItr) )
-            if ( poolItr % memberType == MPAS_POOL_FIELD ) then
-               call get_dimlist_for_field(domain % blocklist % allFields, poolItr % memberName, dimNames)
-               do i=1,size(dimNames)
-                  call mpas_pool_get_dimension(streamDimensions, dimNames(i), dimValue)
-                  if ( .not. associated(dimValue) ) then
-                     call mpas_pool_add_dimension(streamDimensions, dimNames(i), MPAS_MISSING_DIM)
-                  end if
-               end do
-            end if
-         end do
+            call mpas_stream_mgr_begin_iteration(domain % streamManager, streamID=streamName)
 
-         ioType = MPAS_IO_NETCDF  ! ioType is not actually used when an external PIO file_desc_t is provided to MPAS_io_open
-         inputHandle = MPAS_io_open('FILENAME_NOT_USED', MPAS_IO_READ, ioType, domain % ioContext, pio_file_desc = pio_file_desc, ierr = err_local)
+            ! Build stream dimension pool from the list of fields
+            call mpas_pool_create_pool(streamDimensions)
 
-         ! If to determine if file was opened or not.
-         if ( err_local == MPAS_IO_NOERR ) then
+            do while ( mpas_stream_mgr_get_next_field(domain % streamManager, streamName, fieldName, isActive=fieldActive) )
 
-            call mpas_log_write(' ')
+               if (fieldActive) then
+                  call get_dimlist_for_field(domain % blocklist % allFields, fieldName, dimNames)
 
-            ! Iterate over list of dimensions we determined we need from the above loop
-            call mpas_pool_begin_iteration(streamDimensions)
-            do while ( mpas_pool_get_next_member(streamDimensions, poolItr) )
-               if ( poolItr % memberType == MPAS_POOL_DIMENSION ) then
-                  ! Try to read the dimension
-                  call mpas_io_inq_dim(inputHandle, trim(poolItr % memberName), tempDim, ierr = err_local)
-
-                  ! Check to see if the dimension has already been defined
-                  call mpas_pool_get_dimension(readableDimensions, poolItr % memberName, dimValue)
-
-                  ! If to see if dimension was read or not
-                  if ( err_local == MPAS_IO_NOERR ) then
-                     call mpas_log_write('       ' // trim(poolItr % memberName) // ' = $i', intArgs=(/tempDim/) )
-
+                  do i=1,size(dimNames)
+                     call mpas_pool_get_dimension(streamDimensions, dimNames(i), dimValue)
                      if ( .not. associated(dimValue) ) then
-                        call mpas_pool_add_dimension(readableDimensions, poolItr % memberName, tempDim)
-                     else if ( dimValue /= tempDim .and. dimValue == MPAS_MISSING_DIM ) then
-                        dimValue = tempDim
-                     else if ( dimValue /= tempDim ) then
-                        call mpas_log_write('Dimension ' // trim(poolItr % membername) &
-                                             // ' was read with an inconsistent value.', MPAS_LOG_CRIT)
-                     end if
-                  else
-                     call mpas_log_write('       ' // trim(poolItr % memberName) // ' *** not found in stream ***')
-                  end if
-
-               end if
-            end do
-
-            ! Close file
-            call MPAS_io_close(inputHandle)
-
-         end if
-
-         ! Destroy pool that contains list of streams dimensions
-         call mpas_pool_destroy_pool(streamDimensions)
-
-      else
-
-         ! Reading dimensions from streams
-         call mpas_log_write('Reading dimensions from input streams ...')
-         call mpas_stream_mgr_begin_iteration(domain % streamManager)
-         do while ( mpas_stream_mgr_get_next_stream(domain % streamManager, streamID = streamName, directionProperty = streamDirection, &
-                                                    activeProperty = streamActive) )
-
-            if ( streamActive .and. ( streamDirection == MPAS_STREAM_INPUT .or. streamDirection == MPAS_STREAM_INPUT_OUTPUT ) ) then
-
-               call mpas_stream_mgr_begin_iteration(domain % streamManager, streamID=streamName)
-
-               ! Build stream dimension pool from the list of fields
-               call mpas_pool_create_pool(streamDimensions)
-
-               do while ( mpas_stream_mgr_get_next_field(domain % streamManager, streamName, fieldName, isActive=fieldActive) )
-
-                  if (fieldActive) then
-                     call get_dimlist_for_field(domain % blocklist % allFields, fieldName, dimNames)
-
-                     do i=1,size(dimNames)
-                        call mpas_pool_get_dimension(streamDimensions, dimNames(i), dimValue)
-                        if ( .not. associated(dimValue) ) then
-                           call mpas_pool_add_dimension(streamDimensions, dimNames(i), MPAS_MISSING_DIM)
-                        end if
-                     end do
-                     deallocate(dimNames)
-                  end if
-
-               end do
-
-               ! Determine stream filename
-               call mpas_get_stream_filename(domain % streamManager, streamID = streamName, filename = streamFilename, ierr = err_local)
-
-               ! Determine stream io_type
-               call MPAS_stream_mgr_get_property(domain % streamManager, streamName, &
-                                              MPAS_STREAM_PROPERTY_IOTYPE, ioType, ierr = err_local)
-
-               ! Try to open file
-               inputHandle = MPAS_io_open(trim(streamFilename), MPAS_IO_READ, ioType, domain % ioContext, ierr = err_local)
-
-               ! If to determine if file was opened or not.
-               if ( err_local == MPAS_IO_NOERR ) then
-
-                  call mpas_log_write(' ')
-                  call mpas_log_write('----- reading dimensions from stream '''//trim(streamName)//''' using file ' &
-                                       //trim(streamFilename) )
-
-                  ! Iterate over list of dimensions we determined we need from the above loop
-                  call mpas_pool_begin_iteration(streamDimensions)
-                  do while ( mpas_pool_get_next_member(streamDimensions, poolItr) )
-                     if ( poolItr % memberType == MPAS_POOL_DIMENSION ) then
-                        ! Try to read the dimension
-                        call mpas_io_inq_dim(inputHandle, trim(poolItr % memberName), tempDim, ierr = err_local)
-
-                        ! Check to see if the dimension has already been defined
-                        call mpas_pool_get_dimension(readableDimensions, poolItr % memberName, dimValue)
-
-                        ! If to see if dimension was read or not
-                        if ( err_local == MPAS_IO_NOERR ) then
-                           call mpas_log_write('       ' // trim(poolItr % memberName) // ' = $i', intArgs=(/tempDim/) )
-
-                           if ( .not. associated(dimValue) ) then
-                              call mpas_pool_add_dimension(readableDimensions, poolItr % memberName, tempDim)
-                           else if ( dimValue /= tempDim .and. dimValue == MPAS_MISSING_DIM ) then
-                              dimValue = tempDim
-                           else if ( dimValue /= tempDim ) then
-                              call mpas_log_write('Dimension ' // trim(poolItr % membername) &
-                                                   // ' was read with an inconsistent value.', MPAS_LOG_CRIT)
-                           end if
-                        else
-                           call mpas_log_write('       ' // trim(poolItr % memberName) // ' *** not found in stream ***')
-                           call mpas_log_write('')
-                           call mpas_log_write("At least one fields to be read from the '" // trim(streamName) &
-                                               // "' stream is dimensioned", messageType=MPAS_LOG_ERR)
-                           call mpas_log_write("by '" // trim(poolItr % memberName) // "', but the '" &
-                                               // trim(poolItr % memberName) // "' dimension is not defined", &
-                                               messageType=MPAS_LOG_ERR)
-                           call mpas_log_write('in the file '//trim(streamFilename), messageType=MPAS_LOG_ERR)
-                           call mpas_log_write("Please check the input file(s) to be read by the '" // trim(streamName) &
-                                               // "' input stream.", messageType=MPAS_LOG_CRIT)
-                        end if
-
+                        call mpas_pool_add_dimension(streamDimensions, dimNames(i), MPAS_MISSING_DIM)
                      end if
                   end do
-
-                  ! Close file
-                  call mpas_io_close(inputHandle)
-               else
-                  call mpas_log_write(' ')
-                  call mpas_log_write('  *** unable to open input file '//trim(streamFilename)//' for stream ''' &
-                                       //trim(streamName)//'''')
+                  deallocate(dimNames)
                end if
 
-               ! Destroy pool that contains list of streams dimensions
-               call mpas_pool_destroy_pool(streamDimensions)
+            end do
 
-            else if ( .not. streamActive .and. ( streamDirection == MPAS_STREAM_INPUT .or. streamDirection == MPAS_STREAM_INPUT_OUTPUT ) ) then
+            ! Determine stream filename
+            call mpas_get_stream_filename(domain % streamManager, streamID = streamName, filename = streamFilename, ierr = err_local)
+
+            ! Determine stream io_type
+            call MPAS_stream_mgr_get_property(domain % streamManager, streamName, &
+                                              MPAS_STREAM_PROPERTY_IOTYPE, ioType, ierr = err_local)
+
+            ! Try to open file
+            inputHandle = MPAS_io_open(trim(streamFilename), MPAS_IO_READ, ioType, domain % ioContext, ierr = err_local)
+
+            ! If to determine if file was opened or not.
+            if ( err_local == MPAS_IO_NOERR ) then
 
                call mpas_log_write(' ')
-               call mpas_log_write('----- skipping inactive stream '''//trim(streamName)//'''')
-            
+               call mpas_log_write('----- reading dimensions from stream '''//trim(streamName)//''' using file ' &
+                                    //trim(streamFilename) )
+
+               ! Iterate over list of dimensions we determined we need from the above loop
+               call mpas_pool_begin_iteration(streamDimensions)
+               do while ( mpas_pool_get_next_member(streamDimensions, poolItr) )
+                  if ( poolItr % memberType == MPAS_POOL_DIMENSION ) then
+                     ! Try to read the dimension
+                     call mpas_io_inq_dim(inputHandle, trim(poolItr % memberName), tempDim, ierr = err_local)
+
+                     ! Check to see if the dimension has already been defined
+                     call mpas_pool_get_dimension(readableDimensions, poolItr % memberName, dimValue)
+
+                     ! If to see if dimension was read or not
+                     if ( err_local == MPAS_IO_NOERR ) then
+                        call mpas_log_write('       ' // trim(poolItr % memberName) // ' = $i', intArgs=(/tempDim/) )
+
+                        if ( .not. associated(dimValue) ) then
+                           call mpas_pool_add_dimension(readableDimensions, poolItr % memberName, tempDim)
+                        else if ( dimValue /= tempDim .and. dimValue == MPAS_MISSING_DIM ) then
+                           dimValue = tempDim
+                        else if ( dimValue /= tempDim ) then
+                           call mpas_log_write('Dimension ' // trim(poolItr % membername) &
+                                                // ' was read with an inconsistent value.', MPAS_LOG_CRIT)
+                        end if
+                     else
+                        call mpas_log_write('       ' // trim(poolItr % memberName) // ' *** not found in stream ***')
+                     end if
+
+                  end if
+               end do
+
+               ! Close file
+               call mpas_io_close(inputHandle)
+            else
+               call mpas_log_write(' ')
+               call mpas_log_write('  *** unable to open input file '//trim(streamFilename)//' for stream ''' &
+                                    //trim(streamName)//'''')
             end if
 
-         end do
+            ! Destroy pool that contains list of streams dimensions
+            call mpas_pool_destroy_pool(streamDimensions)
 
-         call mpas_log_write(' ')
-         call mpas_log_write('----- done reading dimensions from input streams -----')
-         call mpas_log_write(' ')
-         call mpas_log_write(' ')
+         else if ( .not. streamActive .and. ( streamDirection == MPAS_STREAM_INPUT .or. streamDirection == MPAS_STREAM_INPUT_OUTPUT ) ) then
 
-      end if
+            call mpas_log_write(' ')
+            call mpas_log_write('----- skipping inactive stream '''//trim(streamName)//'''')
+            
+         end if
 
+      end do
+
+      call mpas_log_write(' ')
+      call mpas_log_write('----- done reading dimensions from input streams -----')
+      call mpas_log_write(' ')
+      call mpas_log_write(' ')
+
+      ! Point missingValueMask to the requested field for each field variable
+      call mpas_stream_mgr_begin_iteration(domain % streamManager)
+      do while ( mpas_stream_mgr_get_next_stream(domain % streamManager, &
+                                                 streamID = streamName, &
+                                                 directionProperty = streamDirection, &
+                                                 activeProperty = streamActive) )
+
+         if ( streamActive .and. &
+              ( streamDirection == MPAS_STREAM_OUTPUT .or. &
+                streamDirection == MPAS_STREAM_INPUT_OUTPUT ) ) then
+
+            call mpas_stream_mgr_begin_iteration(domain % streamManager, &
+                                                 streamID=streamName)
+
+            do while ( mpas_stream_mgr_get_next_field(domain % streamManager, &
+                                                      streamName, fieldName, &
+                                                      isActive=fieldActive) )
+
+               if (fieldActive) then
+                  call mpas_pool_get_field_info(domain % blocklist % allFields, &
+                                                fieldName, fieldInfo)
+                  if ( fieldInfo % fieldType == MPAS_POOL_REAL ) then
+
+                     if ( fieldInfo % nDims == 1 ) then
+                        call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                 fieldName, real1DField)
+                        maskName = real1DField % maskName
+                        call mpas_pool_get_field_info(domain % blocklist % allFields, &
+                                                      maskName, maskInfo)
+                        if ( maskInfo % isActive ) then
+                           if ( maskInfo % fieldType == MPAS_POOL_INTEGER ) then
+                              if ( maskInfo % nDims == 1 ) then
+                                 call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                          maskName, int1DMask)
+                                 call mpas_mask_assign_pointer(real1DField, int1DMask)
+                              else
+                                 call mpas_log_write(TRIM(fieldName)//&
+                                    ' does not have 1d mask type '//TRIM(maskName), &
+                                    MPAS_LOG_WARN)
+                              endif
+                           else
+                              call mpas_log_write(TRIM(fieldName)//&
+                                 ' does not have an integer mask type '//TRIM(maskName), &
+                                 MPAS_LOG_WARN)
+                           endif
+                        endif
+                     elseif ( fieldInfo % nDims == 2 ) then
+                        call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                 fieldName, real2DField)
+                        maskName = real2DField % maskName
+                        call mpas_pool_get_field_info(domain % blocklist % allFields, &
+                                                      maskName, maskInfo)
+                        if ( maskInfo % isActive ) then
+                           if ( maskInfo % fieldType == MPAS_POOL_INTEGER ) then
+                              if ( maskInfo % nDims == 2 ) then
+                                 call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                          maskName, int2DMask)
+                                 call mpas_mask_assign_pointer(real2DField, int2DMask)
+                              elseif ( maskInfo % nDims == 1 ) then
+                                 call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                          maskName, int1DMask)
+                                 call mpas_mask_assign_pointer(real2DField, int1DMask)
+                              else
+                                 call mpas_log_write(TRIM(fieldName)//&
+                                    ' does not have 1d or 2d mask type '//TRIM(maskName), &
+                                    MPAS_LOG_WARN)
+                              endif
+                           else
+                              call mpas_log_write(TRIM(fieldName)//&
+                                 ' does not have an integer mask type '//TRIM(maskName), &
+                                    MPAS_LOG_WARN)
+                           endif
+                        endif
+                     else if ( fieldInfo % nDims == 3 ) then
+                        call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                 fieldName, real3DField)
+                        maskName = real3DField % maskName
+                        call mpas_pool_get_field_info(domain % blocklist % allFields, &
+                                                      maskName, maskInfo)
+                        if ( maskInfo % isActive ) then
+                           if ( maskInfo % fieldType == MPAS_POOL_INTEGER ) then
+                              if (real3DField % isVarArray) then
+                                 do j = 1, size(real3DField % constituentNames)
+                                    call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                             real3DField % constituentNames(j), &
+                                                             real2DField)
+                                    fieldName = real3DField % constituentNames(j)
+                                    call mpas_pool_get_field_info(domain % blocklist % allFields, &
+                                                                  fieldName, fieldInfo)
+                                    if ( maskInfo % nDims == 2 ) then
+                                       call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                                maskName, int2DMask)
+                                       call mpas_mask_assign_pointer(real3DField, int2DMask)
+                                    elseif ( maskInfo % nDims == 1 ) then
+                                       call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                                maskName, int1DMask)
+                                       call mpas_mask_assign_pointer(real3DField, int1DMask)
+                                    else
+                                       call mpas_log_write(TRIM(fieldName)//&
+                                          ' does not have 1d or 2d mask type '//TRIM(maskName), &
+                                          MPAS_LOG_WARN)
+                                    endif
+                                 enddo
+                              else ! isVar
+                                 if ( maskInfo % nDims == 3 ) then
+                                    call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                             maskName, int3DMask)
+                                    call mpas_mask_assign_pointer(real3DField, int3DMask)
+                                 elseif ( maskInfo % nDims == 2 ) then
+                                    call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                             maskName, int2DMask)
+                                    call mpas_mask_assign_pointer(real3DField, int2DMask)
+                                 elseif ( maskInfo % nDims == 1 ) then
+                                    call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                             maskName, int1DMask)
+                                    call mpas_mask_assign_pointer(real3DField, int1DMask)
+                                 else
+                                    call mpas_log_write(TRIM(fieldName)//&
+                                       ' does not have 1d, 2d or 3d mask type '//TRIM(maskName), &
+                                       MPAS_LOG_WARN)
+                                 endif
+                              endif
+                           else
+                              call mpas_log_write(TRIM(fieldName)//&
+                                 ' does not have an integer mask type '//TRIM(maskName), &
+                                 MPAS_LOG_WARN)
+                           endif
+                        endif ! mask is active
+                     else if ( fieldInfo % nDims == 4 ) then
+                        call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                 fieldName, real4DField)
+                        maskName = real4DField % maskName
+                        call mpas_pool_get_field_info(domain % blocklist % allFields, &
+                                                      maskName, maskInfo)
+                        if ( maskInfo % isActive ) then
+                           if ( maskInfo % fieldType == MPAS_POOL_INTEGER ) then
+                              if (real4DField % isVarArray) then
+                                 do j = 1, size(real4DField % constituentNames)
+                                    call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                             real4DField % constituentNames(j), &
+                                                             real3DField)
+                                    fieldName = real4DField % constituentNames(j)
+                                    call mpas_pool_get_field_info(domain % blocklist % allFields, &
+                                                                  fieldName, fieldInfo)
+                                    if ( maskInfo % nDims == 3 ) then
+                                       call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                                maskName, int3DMask)
+                                       call mpas_mask_assign_pointer(real4DField, int3DMask)
+                                    elseif ( maskInfo % nDims == 2 ) then
+                                       call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                                maskName, int2DMask)
+                                       call mpas_mask_assign_pointer(real4DField, int2DMask)
+                                    elseif ( maskInfo % nDims == 1 ) then
+                                       call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                                maskName, int1DMask)
+                                       call mpas_mask_assign_pointer(real4DField, int1DMask)
+                                    else
+                                       call mpas_log_write(TRIM(fieldName)//&
+                                          ' does not have 1d, 2d or 3d mask type '//TRIM(maskName), &
+                                          MPAS_LOG_WARN)
+                                    endif
+                                 enddo
+                              else ! isVar
+                                 if ( maskInfo % nDims == 3 ) then
+                                    call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                             maskName, int3DMask)
+                                    call mpas_mask_assign_pointer(real4DField, int3DMask)
+                                 elseif ( maskInfo % nDims == 2 ) then
+                                    call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                             maskName, int2DMask)
+                                    call mpas_mask_assign_pointer(real4DField, int2DMask)
+                                 elseif ( maskInfo % nDims == 1 ) then
+                                    call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                             maskName, int1DMask)
+                                    call mpas_mask_assign_pointer(real4DField, int1DMask)
+                                 else
+                                    call mpas_log_write(TRIM(fieldName)//&
+                                       ' does not have 1d, 2d or 3d mask type '//TRIM(maskName), &
+                                       MPAS_LOG_WARN)
+                                 endif
+                              endif
+                           else
+                              call mpas_log_write(TRIM(fieldName)//&
+                                 ' does not have an integer mask type '//TRIM(maskName), &
+                                 MPAS_LOG_WARN)
+                           endif
+                        endif
+                     else if ( fieldInfo % nDims == 5 ) then
+                        call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                 fieldName, real5DField)
+                        maskName = real5DField % maskName
+                        call mpas_pool_get_field_info(domain % blocklist % allFields, &
+                                                      maskName, maskInfo)
+                        if ( maskInfo % isActive ) then
+                           if ( maskInfo % fieldType == MPAS_POOL_INTEGER ) then
+                              if (real5DField % isVarArray) then
+                                 do j = 1, size(real5DField % constituentNames)
+                                    call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                             real5DField % constituentNames(j), &
+                                                             real3DField)
+                                    fieldName = real5DField % constituentNames(j)
+                                    call mpas_pool_get_field_info(domain % blocklist % allFields, &
+                                                                  fieldName, fieldInfo)
+                                    if ( maskInfo % nDims == 3 ) then
+                                       call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                                maskName, int3DMask)
+                                       call mpas_mask_assign_pointer(real5DField, int3DMask)
+                                    elseif ( maskInfo % nDims == 2 ) then
+                                       call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                                maskName, int2DMask)
+                                       call mpas_mask_assign_pointer(real5DField, int2DMask)
+                                    elseif ( maskInfo % nDims == 1 ) then
+                                       call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                                maskName, int1DMask)
+                                       call mpas_mask_assign_pointer(real5DField, int1DMask)
+                                    else
+                                       call mpas_log_write(TRIM(fieldName)//&
+                                          ' does not have 1d, 2d or 3d mask type '//TRIM(maskName), &
+                                          MPAS_LOG_WARN)
+                                    endif
+                                 enddo
+                              else ! isVar
+                                 if ( maskInfo % nDims == 3 ) then
+                                    call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                             maskName, int3DMask)
+                                    call mpas_mask_assign_pointer(real5DField, int3DMask)
+                                 elseif ( maskInfo % nDims == 2 ) then
+                                    call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                             maskName, int2DMask)
+                                    call mpas_mask_assign_pointer(real5DField, int2DMask)
+                                 elseif ( maskInfo % nDims == 1 ) then
+                                    call mpas_pool_get_field(domain % blocklist % allFields, &
+                                                             maskName, int1DMask)
+                                    call mpas_mask_assign_pointer(real5DField, int1DMask)
+                                 else
+                                    call mpas_log_write(TRIM(fieldName)//&
+                                       ' does not have 1d, 2d or 3d mask type '//TRIM(maskName), &
+                                       MPAS_LOG_WARN)
+                                 endif
+                              endif
+                           else
+                              call mpas_log_write(TRIM(fieldName)//&
+                                 ' does not have an integer mask type '//TRIM(maskName), &
+                                 MPAS_LOG_WARN)
+                           endif
+                        endif
+                     endif
+                  endif
+               endif
+            enddo
+         endif
+      enddo
       call mpas_pool_set_error_level(err_level)
 
       ! Allocate blocks, and copy indexTo arrays into blocks

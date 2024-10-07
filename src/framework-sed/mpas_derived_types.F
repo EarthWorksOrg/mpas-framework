@@ -62,8 +62,6 @@ module MPASAOS_derived_types
 
 #include "mpas_decomp_types.inc"
 
-#include "mpas_coupler_types.inc"
-
 #include "mpas_domain_types.inc"
 
 #include "mpas_core_types.inc"
