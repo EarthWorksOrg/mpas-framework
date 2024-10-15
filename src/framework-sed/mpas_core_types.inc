@@ -152,7 +152,6 @@
       character (len=StrKIND) :: modelVersion !< Constant: Version number
       character (len=StrKIND) :: executableName !< Constant: Name of executable generated at build time.
       character (len=StrKIND) :: git_version !< Constant: Version string from git-describe.
-      character (len=StrKIND) :: build_target !< Constant: Build target from top-level Makefile.
       character (len=StrKIND*2) :: history !< History attribute, read in from input file.
       character (len=StrKIND) :: Conventions !< Conventions attribute, read in from input file.
       character (len=StrKIND) :: source !< source attribute, read in from input file.
@@ -174,12 +173,6 @@
       procedure (mpas_setup_immutable_streams_function), pointer, nopass :: setup_immutable_streams => null()
       procedure (mpas_setup_derived_dimensions_function), pointer, nopass :: setup_derived_dimensions => null()
       procedure (mpas_setup_decomposed_dimensions_function), pointer, nopass :: setup_decomposed_dimensions => null()
-
-      ! Core component role function pointers
-      procedure (mpas_coupler_role_function), pointer, nopass :: component_role
-      procedure (mpas_coupler_roleleader_function), pointer, nopass :: component_role_leader
-      procedure (mpas_coupler_role_is_function), pointer, nopass :: component_role_is
-      procedure (mpas_coupler_role_incl_function), pointer, nopass :: component_role_includes
 
       ! core_type is a linked list
       type (core_type), pointer :: next => null()
