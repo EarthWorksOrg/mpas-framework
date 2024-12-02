@@ -98,7 +98,7 @@ module MPASAOS_timekeeping
          call ESMF_Initialize(defaultCalKind=ESMF_CALKIND_GREGORIAN)
 #endif
 #endif
-      else if (trim(calendar) == 'gregorian_noleap') then
+      else if (trim(calendar) == 'noleap') then
          TheCalendar = MPAS_GREGORIAN_NOLEAP
 #ifndef MPAS_NO_ESMF_INIT
 #ifndef MPAS_EXTERNAL_ESMF_LIB

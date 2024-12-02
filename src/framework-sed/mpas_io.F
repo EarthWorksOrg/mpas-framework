@@ -2349,8 +2349,7 @@ module MPASAOS_io
          ! new dimensions or variables, in which case PIO_enddef() will return
          ! an error under harmless circumstances; so, don't return only for
          ! pre-existing files.
-         if (pio_ierr /= PIO_noerr .and. &
-             .not. (handle % external_file_desc .or. handle % preexisting_file)) then
+         if (pio_ierr /= PIO_noerr .and. (.not. handle % preexisting_file)) then
             pio_global_ierr = pio_ierr
             if (present(ierr)) ierr = MPAS_IO_ERR_PIO
             return
@@ -4935,9 +4934,9 @@ module MPASAOS_io
       handle % initialized = .false.
 
 !call mpas_log_write('MGD PIO_closefile')
-      if (.not. handle % external_file_desc) then
+      !if (.not. handle % external_file_desc) then
          call PIO_closefile(handle % pio_file)
-      end if
+      !end if
 
    end subroutine MPAS_io_close
 

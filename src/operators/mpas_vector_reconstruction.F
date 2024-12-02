@@ -3,7 +3,7 @@
 !
 ! Unless noted otherwise source code is licensed under the BSD license.
 ! Additional copyright and license information can be found in the LICENSE file
-! distributed with this code, or at http://mpas-dev.github.com/license.html
+! distributed with this code, or at http://mpas-dev.github.io/license.html
 !
 !***********************************************************************
 !
@@ -26,7 +26,7 @@ module MPASAOS_vector_reconstruction
 
   implicit none
 
-  public :: mpas_init_reconstruct, mpas_reconstruct, mpas_reconstruct_gpu
+  public :: mpas_init_reconstruct, mpas_reconstruct
 
   interface mpas_reconstruct
      module procedure mpas_reconstruct_1d
@@ -34,6 +34,7 @@ module MPASAOS_vector_reconstruction
   end interface
 
   interface mpas_reconstruct_gpu
+     module procedure mpas_reconstruct_1d_gpu
      module procedure mpas_reconstruct_2d_gpu
   end interface
 
@@ -300,185 +301,6 @@ module MPASAOS_vector_reconstruction
 
 !***********************************************************************
 !
-!  routine mpas_reconstruct_2d_gpu
-!
-!> \brief   2d MPAS Vector reconstruction routine
-!> \author  Xylar Asay-Davis, Todd Ringler
-!> \date    03/28/13
-!> \details 
-!>  Purpose: reconstruct vector field at cell centers based on radial basis functions
-!>  Input: grid meta data and vector component data residing at cell edges
-!>  Output: reconstructed vector field (measured in X,Y,Z) located at cell centers
-!-----------------------------------------------------------------------
-subroutine mpas_reconstruct_2d_gpu(nCellParent,nVertLevels, maxEdges, nEdges,meshPool, u, uReconstructX, uReconstructY, uReconstructZ, &
-uReconstructZonal, uReconstructMeridional, includeHalos)!{{{
-
-    implicit none 
-
-    type (mpas_pool_type), intent(in) :: meshPool !< Input: Mesh information
-    integer, intent(in) :: nVertLevels, nEdges,nCellParent, maxEdges
-    real (kind=RKIND), dimension(nVertLevels,nEdges+1), intent(in) :: u !< Input: Velocity field on edges
-    real (kind=RKIND), dimension(nVertLevels,nCellParent), intent(out) :: uReconstructX !< Output: X Component of velocity reconstructed to cell centers
-    real (kind=RKIND), dimension(nVertLevels,nCellParent), intent(out) :: uReconstructY !< Output: Y Component of velocity reconstructed to cell centers
-    real (kind=RKIND), dimension(nVertLevels,nCellParent), intent(out) :: uReconstructZ !< Output: Z Component of velocity reconstructed to cell centers
-    real (kind=RKIND), dimension(nVertLevels,nCellParent), intent(out) :: uReconstructZonal !< Output: Zonal Component of velocity reconstructed to cell centers
-    real (kind=RKIND), dimension(nVertLevels,nCellParent), intent(out) :: uReconstructMeridional !< Output: Meridional Component of velocity reconstructed to cell centers
-    logical, optional, intent(in) :: includeHalos !< Input: Optional logical that allows reconstruction over halo regions
-
-    !   temporary arrays needed in the compute procedure
-    logical :: includeHalosLocal
-    integer, pointer :: nCells
-    integer, dimension(:,:), pointer :: edgesOnCell
-    integer, dimension(:), pointer :: nEdgesOnCell
-    integer :: iCell,iEdge, i
-    real(kind=RKIND), dimension(:), pointer :: latCell, lonCell
-
-    real (kind=RKIND), dimension(:,:,:), pointer :: coeffs_reconstruct
- 
-    logical, pointer :: on_a_sphere
-
-    real (kind=RKIND) :: clat, slat, clon, slon
-    integer temp
-
-    if ( present(includeHalos) ) then
-       includeHalosLocal = includeHalos
-    else
-       includeHalosLocal = .false.
-    end if
- 
-    ! stored arrays used during compute procedure
-    call mpas_pool_get_array_gpu(meshPool, 'coeffs_reconstruct', coeffs_reconstruct)
- 
-    ! temporary variables
-    call mpas_pool_get_array_gpu(meshPool, 'nEdgesOnCell', nEdgesOnCell)
-    call mpas_pool_get_array_gpu(meshPool, 'edgesOnCell', edgesOnCell)
-    if ( includeHalosLocal ) then
-       call mpas_pool_get_dimension(meshPool, 'nCells', nCells)
-    else
-       call mpas_pool_get_dimension(meshPool, 'nCellsSolve', nCells)
-    end if
- 
-    call mpas_pool_get_array_gpu(meshPool, 'latCell', latCell)
-    call mpas_pool_get_array_gpu(meshPool, 'lonCell', lonCell)
- 
-    call mpas_pool_get_config(meshPool, 'on_a_sphere', on_a_sphere)
-
-    call mpas_reconstruct_2d_gpu_work(nCellParent,nVertLevels, maxEdges, nEdges, u, uReconstructX, uReconstructY, uReconstructZ, &
-    uReconstructZonal, uReconstructMeridional, nEdgesOnCell, &
-    edgesOnCell, latCell, lonCell, coeffs_reconstruct, on_a_sphere)
-
-  end subroutine mpas_reconstruct_2d_gpu!}}}
-  
-  subroutine mpas_reconstruct_2d_gpu_work(nCellParent,nVertLevels,maxEdges, nEdges, u, uReconstructX, uReconstructY, uReconstructZ, &
-           uReconstructZonal, uReconstructMeridional, nEdgesOnCell, &
-           edgesOnCell, latCell, lonCell, coeffs_reconstruct, on_a_sphere)
-
-    implicit none
-
-    integer, intent(in) :: nVertLevels, nEdges,nCellParent, maxEdges
-    real (kind=RKIND), dimension(nVertLevels,nEdges+1), intent(in) :: u !< Input: Velocity field on edges
-    real (kind=RKIND), dimension(nVertLevels,nCellParent), intent(out) :: uReconstructX !< Output: X Component of velocity reconstructed to cell centers
-    real (kind=RKIND), dimension(nVertLevels,nCellParent), intent(out) :: uReconstructY !< Output: Y Component of velocity reconstructed to cell centers
-    real (kind=RKIND), dimension(nVertLevels,nCellParent), intent(out) :: uReconstructZ !< Output: Z Component of velocity reconstructed to cell centers
-    real (kind=RKIND), dimension(nVertLevels,nCellParent), intent(out) :: uReconstructZonal !< Output: Zonal Component of velocity reconstructed to cell centers
-    real (kind=RKIND), dimension(nVertLevels,nCellParent), intent(out) :: uReconstructMeridional !< Output: Meridional Component of velocity reconstructed to cell centers
-
-    !   temporary arrays needed in the compute procedure
-    integer :: iCell,iEdge, i
-    integer, dimension(maxEdges,nCellParent+1), intent(in) :: edgesOnCell
-    integer, dimension(nCellParent), intent(in) :: nEdgesOnCell
-    real(kind=RKIND), dimension(nCellParent), intent(in) :: latCell, lonCell
-    real (kind=RKIND), dimension(3,maxEdges,nCellParent+1), intent(in) :: coeffs_reconstruct
-    logical, intent(in) :: on_a_sphere
-
-    real (kind=RKIND) :: clat, slat, clon, slon
-    integer temp
-
-   
-     ! loop over cell centers
-    !!!$omp do schedule(runtime)
-!$acc data present(u,uReconstructX, uReconstructY, uReconstructZ, uReconstructZonal, uReconstructMeridional, nedgesOnCell,edgesOnCell,latCell,lonCell, coeffs_reconstruct)
-!$acc parallel
-!$acc loop gang worker
-    do iCell = 1, nCellParent
-      !$acc loop vector
-      do temp=1,nVertLevels
-      ! initialize the reconstructed vectors
-      uReconstructX(temp,iCell) = 0.0
-      uReconstructY(temp,iCell) = 0.0
-      uReconstructZ(temp,iCell) = 0.0
-     end do
-   enddo
-!$acc end parallel
-
-      ! a more efficient reconstruction where
-      ! rbf_values*matrix_reconstruct
-
-      ! has been precomputed in coeffs_reconstruct
-
-!$acc parallel
-!$acc loop gang private(iEdge)
-    do iCell = 1, nCellParent
-      do i=1,nEdgesOnCell(iCell)
-        iEdge = edgesOnCell(i,iCell)
-        !$acc loop vector
-        do temp=1,nVertLevels
-        uReconstructX(temp,iCell) = uReconstructX(temp,iCell) &
-          + coeffs_reconstruct(1,i,iCell) * u(temp,iEdge)
-        uReconstructY(temp,iCell) = uReconstructY(temp,iCell) &
-          + coeffs_reconstruct(2,i,iCell) * u(temp,iEdge)
-        uReconstructZ(temp,iCell) = uReconstructZ(temp,iCell) &
-          + coeffs_reconstruct(3,i,iCell) * u(temp,iEdge)
-        end do
- 
-      enddo
-    enddo   ! iCell
-
-!$acc end parallel
-    !!!$omp end do
- 
-    call mpas_threading_barrier()
- 
-    if (on_a_sphere) then
-      !!!$omp do schedule(runtime)
-!$acc parallel
-!$acc loop gang worker private(clat,slat,clon,slon)
-      do iCell = 1, nCellParent
-        clat = cos(latCell(iCell))
-        slat = sin(latCell(iCell))
-        clon = cos(lonCell(iCell))
-        slon = sin(lonCell(iCell))
-        !$acc loop vector
-        do temp= 1, nVertLevels
-          uReconstructZonal(temp,iCell) = -uReconstructX(temp,iCell)*slon + &
-                                      uReconstructY(temp,iCell)*clon
-          uReconstructMeridional(temp,iCell) = -(uReconstructX(temp,iCell)*clon       &
-                                          + uReconstructY(temp,iCell)*slon)*slat &
-                                          + uReconstructZ(temp,iCell)*clat
-        end do
-      end do
-!$acc end parallel
-      !!!$omp end do
-    else
-      !!!$omp do schedule(runtime)
-!$acc parallel
-!$acc loop gang worker vector
-      do iCell = 1, nCellParent
-        uReconstructZonal     (:,iCell) = uReconstructX(:,iCell)
-        uReconstructMeridional(:,iCell) = uReconstructY(:,iCell)
-      end do
-!$acc end parallel
-      !!!$omp end do
-    end if
-!$acc end data
-
-   
-end subroutine mpas_reconstruct_2d_gpu_work
-
-
-
-!***********************************************************************
-!
 !  routine mpas_reconstruct_1d
 !
 !> \brief   1d MPAS Vector reconstruction routine
@@ -589,6 +411,279 @@ end subroutine mpas_reconstruct_2d_gpu_work
     end if
 
   end subroutine mpas_reconstruct_1d!}}}
+
+!***********************************************************************
+!
+!  routine mpas_reconstruct_2d_gpu
+!
+!> \brief   2d MPAS Vector reconstruction routine for OpenACC
+!> \author  Bob Robey
+!> \date    11/16/21
+!> \details
+!>  Purpose: reconstruct vector field at cell centers based on radial basis functions. This
+!>    version is for the OpenACC version without changing the original CPU version. The
+!>    code is based on the mpas_reconstruct_2d subroutine
+!>  Input: grid meta data and vector component data residing at cell edges
+!>  Output: reconstructed vector field (measured in X,Y,Z) located at cell centers
+!-----------------------------------------------------------------------
+  subroutine mpas_reconstruct_2d_gpu(meshPool, u, uReconstructX, uReconstructY, uReconstructZ, uReconstructZonal, uReconstructMeridional, includeHalos)!{{{
+
+    implicit none
+
+    type (mpas_pool_type), intent(in) :: meshPool !< Input: Mesh information
+    real (kind=RKIND), dimension(:,:), intent(in) :: u !< Input: Velocity field on edges
+    real (kind=RKIND), dimension(:,:), intent(out) :: uReconstructX !< Output: X Component of velocity reconstructed to cell centers
+    real (kind=RKIND), dimension(:,:), intent(out) :: uReconstructY !< Output: Y Component of velocity reconstructed to cell centers
+    real (kind=RKIND), dimension(:,:), intent(out) :: uReconstructZ !< Output: Z Component of velocity reconstructed to cell centers
+    real (kind=RKIND), dimension(:,:), intent(out) :: uReconstructZonal !< Output: Zonal Component of velocity reconstructed to cell centers
+    real (kind=RKIND), dimension(:,:), intent(out) :: uReconstructMeridional !< Output: Meridional Component of velocity reconstructed to cell centers
+    logical, optional, intent(in) :: includeHalos !< Input: Optional logical that allows reconstruction over halo regions
+
+    !   temporary arrays needed in the compute procedure
+    logical :: includeHalosLocal
+    integer :: nCells
+    integer, dimension(:,:), pointer :: edgesOnCell
+    integer, dimension(:), pointer :: nEdgesOnCell
+    integer :: iCell,iEdge, i
+    real(kind=RKIND), dimension(:), pointer :: latCell, lonCell
+
+    real (kind=RKIND), dimension(:,:,:), pointer :: coeffs_reconstruct
+
+    logical, pointer :: on_a_sphere
+
+    real (kind=RKIND) :: clat, slat, clon, slon
+
+    if ( present(includeHalos) ) then
+       includeHalosLocal = includeHalos
+    else
+       includeHalosLocal = .false.
+    end if
+
+    ! stored arrays used during compute procedure
+    call mpas_pool_get_array(meshPool, 'coeffs_reconstruct', coeffs_reconstruct)
+
+    ! temporary variables
+    call mpas_pool_get_array(meshPool, 'nEdgesOnCell', nEdgesOnCell)
+    call mpas_pool_get_array(meshPool, 'edgesOnCell', edgesOnCell)
+
+    if ( includeHalosLocal ) then
+       call mpas_pool_get_dimension_scalar(meshPool, 'nCells', nCells)
+    else
+       call mpas_pool_get_dimension_scalar(meshPool, 'nCellsSolve', nCells)
+    end if
+
+    call mpas_pool_get_array(meshPool, 'latCell', latCell)
+    call mpas_pool_get_array(meshPool, 'lonCell', lonCell)
+
+    call mpas_pool_get_config(meshPool, 'on_a_sphere', on_a_sphere)
+
+    ! loop over cell centers
+#ifdef MPAS_OPENACC
+    !$acc parallel loop present(nEdgesOnCell, edgesOnCell, u, coeffs_reconstruct, &
+    !$acc    uReconstructX, uReconstructY, uReconstructZ)
+#else
+    !$omp do schedule(runtime)
+#endif
+    do iCell = 1, nCells
+      ! initialize the reconstructed vectors
+      uReconstructX(:,iCell) = 0.0
+      uReconstructY(:,iCell) = 0.0
+      uReconstructZ(:,iCell) = 0.0
+
+      ! a more efficient reconstruction where rbf_values*matrix_reconstruct
+      ! has been precomputed in coeffs_reconstruct
+      do i=1,nEdgesOnCell(iCell)
+        iEdge = edgesOnCell(i,iCell)
+        uReconstructX(:,iCell) = uReconstructX(:,iCell) &
+          + coeffs_reconstruct(1,i,iCell) * u(:,iEdge)
+        uReconstructY(:,iCell) = uReconstructY(:,iCell) &
+          + coeffs_reconstruct(2,i,iCell) * u(:,iEdge)
+        uReconstructZ(:,iCell) = uReconstructZ(:,iCell) &
+          + coeffs_reconstruct(3,i,iCell) * u(:,iEdge)
+
+      enddo
+    enddo   ! iCell
+#ifndef MPAS_OPENACC
+    !$omp end do
+#endif
+
+    call mpas_threading_barrier()
+
+    if (on_a_sphere) then
+#ifdef MPAS_OPENACC
+      !$acc parallel loop present(lonCell, latCell, uReconstructX, uReconstructY, uReconstructZ, &
+      !$acc    uReconstructZonal, uReconstructMeridional)
+#else
+      !$omp do schedule(runtime)
+#endif
+      do iCell = 1, nCells
+        clat = cos(latCell(iCell))
+        slat = sin(latCell(iCell))
+        clon = cos(lonCell(iCell))
+        slon = sin(lonCell(iCell))
+        uReconstructZonal(:,iCell) = -uReconstructX(:,iCell)*slon + &
+                                      uReconstructY(:,iCell)*clon
+        uReconstructMeridional(:,iCell) = -(uReconstructX(:,iCell)*clon       &
+                                          + uReconstructY(:,iCell)*slon)*slat &
+                                          + uReconstructZ(:,iCell)*clat
+      end do
+#ifndef MPAS_OPENACC
+      !$omp end do
+#endif
+    else
+#ifdef MPAS_OPENACC
+      !$acc parallel loop present(uReconstructX, uReconstructY, &
+      !$acc    uReconstructZonal, uReconstructMeridional)
+#else
+      !$omp do schedule(runtime)
+#endif
+      do iCell = 1, nCells
+        uReconstructZonal     (:,iCell) = uReconstructX(:,iCell)
+        uReconstructMeridional(:,iCell) = uReconstructY(:,iCell)
+      end do
+#ifndef MPAS_OPENACC
+      !$omp end do
+#endif
+    end if
+
+  end subroutine mpas_reconstruct_2d_gpu!}}}
+
+
+!***********************************************************************
+!
+!  routine mpas_reconstruct_1d_gpu
+!
+!> \brief   1d MPAS Vector reconstruction routine for OpenACC
+!> \author  Bob Robey
+!> \date    11/16/21
+!> \details
+!>  Purpose: reconstruct vector field at cell centers based on radial basis functions. This
+!>    version is for the OpenACC version without changing the original CPU version. The
+!>    code is based on the mpas_reconstruct_1d_subroutine
+!>  Input: grid meta data and vector component data residing at cell edges
+!>  Output: reconstructed vector field (measured in X,Y,Z) located at cell centers
+!-----------------------------------------------------------------------
+  subroutine mpas_reconstruct_1d_gpu(meshPool, u, uReconstructX, uReconstructY, uReconstructZ, uReconstructZonal, uReconstructMeridional, includeHalos)!{{{
+
+    implicit none
+
+    type (mpas_pool_type), intent(in) :: meshPool !< Input: Mesh information
+    real (kind=RKIND), dimension(:), intent(in) :: u !< Input: Velocity field on edges
+    real (kind=RKIND), dimension(:), intent(out) :: uReconstructX !< Output: X Component of velocity reconstructed to cell centers
+    real (kind=RKIND), dimension(:), intent(out) :: uReconstructY !< Output: Y Component of velocity reconstructed to cell centers
+    real (kind=RKIND), dimension(:), intent(out) :: uReconstructZ !< Output: Z Component of velocity reconstructed to cell centers
+    real (kind=RKIND), dimension(:), intent(out) :: uReconstructZonal !< Output: Zonal Component of velocity reconstructed to cell centers
+    real (kind=RKIND), dimension(:), intent(out) :: uReconstructMeridional !< Output: Meridional Component of velocity reconstructed to cell centers
+    logical, optional, intent(in) :: includeHalos !< Input: Logical flag that allows reconstructing over halo regions
+
+    !   temporary arrays needed in the compute procedure
+    integer :: nCells
+    integer, dimension(:,:), pointer :: edgesOnCell
+    integer, dimension(:), pointer :: nEdgesOnCell
+    integer :: iCell,iEdge, i
+    real(kind=RKIND), dimension(:), pointer :: latCell, lonCell
+
+    real (kind=RKIND), dimension(:,:,:), pointer :: coeffs_reconstruct
+
+    logical, pointer :: on_a_sphere
+    logical :: includeHalosLocal
+
+    real (kind=RKIND) :: clat, slat, clon, slon
+
+    if ( present(includeHalos) ) then
+       includeHalosLocal = includeHalos
+    else
+       includeHalosLocal = .false.
+    end if
+
+    ! stored arrays used during compute procedure
+    call mpas_pool_get_array(meshPool, 'coeffs_reconstruct', coeffs_reconstruct)
+
+    ! temporary variables
+    call mpas_pool_get_array(meshPool, 'nEdgesOnCell', nEdgesOnCell)
+    call mpas_pool_get_array(meshPool, 'edgesOnCell', edgesOnCell)
+
+    if ( includeHalosLocal ) then
+       call mpas_pool_get_dimension_scalar(meshPool, 'nCells', nCells)
+    else
+       call mpas_pool_get_dimension_scalar(meshPool, 'nCellsSolve', nCells)
+    end if
+
+    call mpas_pool_get_array(meshPool, 'latCell', latCell)
+    call mpas_pool_get_array(meshPool, 'lonCell', lonCell)
+
+    call mpas_pool_get_config(meshPool, 'on_a_sphere', on_a_sphere)
+
+    ! loop over cell centers
+#ifdef MPAS_OPENACC
+    !$acc parallel loop present(nEdgesOnCell, edgesOnCell, u, coeffs_reconstruct, &
+    !$acc    uReconstructX, uReconstructY, uReconstructZ)
+#else
+    !$omp do schedule(runtime)
+#endif
+    do iCell = 1, nCells
+      ! initialize the reconstructed vectors
+      uReconstructX(iCell) = 0.0
+      uReconstructY(iCell) = 0.0
+      uReconstructZ(iCell) = 0.0
+
+      ! a more efficient reconstruction where rbf_values*matrix_reconstruct
+      ! has been precomputed in coeffs_reconstruct
+      do i=1,nEdgesOnCell(iCell)
+        iEdge = edgesOnCell(i,iCell)
+        uReconstructX(iCell) = uReconstructX(iCell) &
+          + coeffs_reconstruct(1,i,iCell) * u(iEdge)
+        uReconstructY(iCell) = uReconstructY(iCell) &
+          + coeffs_reconstruct(2,i,iCell) * u(iEdge)
+        uReconstructZ(iCell) = uReconstructZ(iCell) &
+          + coeffs_reconstruct(3,i,iCell) * u(iEdge)
+
+      enddo
+    enddo   ! iCell
+#ifndef MPAS_OPENACC
+    !$omp end do
+#endif
+
+    call mpas_threading_barrier()
+
+    if (on_a_sphere) then
+#ifdef MPAS_OPENACC
+      !$acc parallel loop present(lonCell, latCell, uReconstructX, uReconstructY, uReconstructZ, &
+      !$acc    uReconstructZonal, uReconstructMeridional)
+#else
+      !$omp do schedule(runtime)
+#endif
+      do iCell = 1, nCells
+        clat = cos(latCell(iCell))
+        slat = sin(latCell(iCell))
+        clon = cos(lonCell(iCell))
+        slon = sin(lonCell(iCell))
+        uReconstructZonal(iCell) = -uReconstructX(iCell)*slon + &
+                                    uReconstructY(iCell)*clon
+        uReconstructMeridional(iCell) = -(uReconstructX(iCell)*clon       &
+                                        + uReconstructY(iCell)*slon)*slat &
+                                        + uReconstructZ(iCell)*clat
+      end do
+#ifndef MPAS_OPENACC
+      !$omp end do
+#endif
+    else
+#ifdef MPAS_OPENACC
+      !$acc parallel loop present(uReconstructX, uReconstructY, &
+      !$acc    uReconstructZonal, uReconstructMeridional)
+#else
+      !$omp do schedule(runtime)
+#endif
+      do iCell = 1, nCells
+        uReconstructZonal     (iCell) = uReconstructX(iCell)
+        uReconstructMeridional(iCell) = uReconstructY(iCell)
+      end do
+#ifndef MPAS_OPENACC
+      !$omp end do
+#endif
+    end if
+
+  end subroutine mpas_reconstruct_1d_gpu!}}}
 
 end module MPASAOS_vector_reconstruction
 

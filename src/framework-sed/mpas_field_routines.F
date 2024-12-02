@@ -3,7 +3,7 @@
 !
 ! Unless noted otherwise source code is licensed under the BSD license.
 ! Additional copyright and license information can be found in the LICENSE file
-! distributed with this code, or at http://mpas-dev.github.com/license.html
+! distributed with this code, or at http://mpas-dev.github.io/license.html
 !
 !***********************************************************************
 !
@@ -23,6 +23,7 @@ module MPASAOS_field_routines
    use MPASAOS_derived_types
    use MPASAOS_threading
    use MPASAOS_attlist
+   use MPASAOS_log
 
    interface mpas_allocate_mold
       module procedure mpas_allocate_mold_1dreal
@@ -34,6 +35,35 @@ module MPASAOS_field_routines
       module procedure mpas_allocate_mold_2dinteger
       module procedure mpas_allocate_mold_3dinteger
       module procedure mpas_allocate_mold_1dchar
+   end interface
+
+   interface mpas_mask_assign_pointer
+      module procedure mpas_mask_assign_pointer_field1d_mask1d_real
+      module procedure mpas_mask_assign_pointer_field2d_mask2d_real
+      module procedure mpas_mask_assign_pointer_field2d_mask1d_real
+      module procedure mpas_mask_assign_pointer_field3d_mask3d_real
+      module procedure mpas_mask_assign_pointer_field3d_mask2d_real
+      module procedure mpas_mask_assign_pointer_field3d_mask1d_real
+      module procedure mpas_mask_assign_pointer_field4d_mask3d_real
+      module procedure mpas_mask_assign_pointer_field4d_mask2d_real
+      module procedure mpas_mask_assign_pointer_field4d_mask1d_real
+      module procedure mpas_mask_assign_pointer_field5d_mask3d_real
+      module procedure mpas_mask_assign_pointer_field5d_mask2d_real
+      module procedure mpas_mask_assign_pointer_field5d_mask1d_real
+   end interface
+   interface mpas_mask_field
+      module procedure mpas_mask_field1d_mask1d_real
+      module procedure mpas_mask_field2d_mask2d_real
+      module procedure mpas_mask_field2d_mask1d_real
+      module procedure mpas_mask_field3d_mask3d_real
+      module procedure mpas_mask_field3d_mask2d_real
+      module procedure mpas_mask_field3d_mask1d_real
+      module procedure mpas_mask_field4d_mask3d_real
+      module procedure mpas_mask_field4d_mask2d_real
+      module procedure mpas_mask_field4d_mask1d_real
+      module procedure mpas_mask_field5d_mask3d_real
+      module procedure mpas_mask_field5d_mask2d_real
+      module procedure mpas_mask_field5d_mask1d_real
    end interface
 
    interface mpas_duplicate_field
@@ -987,7 +1017,6 @@ module MPASAOS_field_routines
              f_cursor => f
              do while(associated(f_cursor))
                if(associated(f_cursor % array)) then
-                 !$acc exit data finalize delete(f_cursor % array)
                  deallocate(f_cursor % array)
                end if
    
@@ -995,7 +1024,6 @@ module MPASAOS_field_routines
              end do
           else
              if(associated(f % array)) then
-                !$acc exit data finalize delete(f % array)
                 deallocate(f % array)
              end if
           end if
@@ -1039,7 +1067,6 @@ module MPASAOS_field_routines
              f_cursor => f
              do while(associated(f_cursor))
                if(associated(f_cursor % array)) then
-                 !$acc exit data finalize delete(f_cursor % array)
                  deallocate(f_cursor % array)
                end if
    
@@ -1047,7 +1074,6 @@ module MPASAOS_field_routines
              end do
           else
              if(associated(f % array)) then
-                !$acc exit data finalize delete(f % array)
                 deallocate(f % array)
              end if
           end if
@@ -1091,7 +1117,6 @@ module MPASAOS_field_routines
              f_cursor => f
              do while(associated(f_cursor))
                if(associated(f_cursor % array)) then
-                 !$acc exit data finalize delete(f_cursor % array)
                  deallocate(f_cursor % array)
                end if
    
@@ -1099,7 +1124,6 @@ module MPASAOS_field_routines
              end do
           else
              if(associated(f % array)) then
-                 !$acc exit data finalize delete(f % array)
                 deallocate(f % array)
              end if
           end if
@@ -1143,7 +1167,6 @@ module MPASAOS_field_routines
              f_cursor => f
              do while(associated(f_cursor))
                if(associated(f_cursor % array)) then
-                 !$acc exit data finalize delete(f_cursor % array)
                  deallocate(f_cursor % array)
                end if
    
@@ -1151,7 +1174,6 @@ module MPASAOS_field_routines
              end do
           else
              if(associated(f % array)) then
-                 !$acc exit data finalize delete(f_cursor % array)
                 deallocate(f % array)
              end if
           end if
@@ -1195,7 +1217,6 @@ module MPASAOS_field_routines
              f_cursor => f
              do while(associated(f_cursor))
                if(associated(f_cursor % array)) then
-                 !$acc exit data finalize delete(f_cursor % array)
                  deallocate(f_cursor % array)
                end if
    
@@ -1203,7 +1224,6 @@ module MPASAOS_field_routines
              end do
           else
              if(associated(f % array)) then
-                 !$acc exit data finalize delete(f % array)
                 deallocate(f % array)
              end if
           end if
@@ -1247,7 +1267,6 @@ module MPASAOS_field_routines
              f_cursor => f
              do while(associated(f_cursor))
                if(associated(f_cursor % array)) then
-                 !$acc exit data finalize delete(f_cursor % array)
                  deallocate(f_cursor % array)
                end if
    
@@ -1255,7 +1274,6 @@ module MPASAOS_field_routines
              end do
           else
              if(associated(f % array)) then
-                !$acc exit data finalize delete(f % array)
                 deallocate(f % array)
              end if
           end if
@@ -1299,7 +1317,6 @@ module MPASAOS_field_routines
              f_cursor => f
              do while(associated(f_cursor))
                if(associated(f_cursor % array)) then
-                 !$acc exit data finalize delete(f_cursor % array)
                  deallocate(f_cursor % array)
                end if
    
@@ -1307,7 +1324,6 @@ module MPASAOS_field_routines
              end do
           else
              if(associated(f % array)) then
-                !$acc exit data finalize delete(f % array)
                 deallocate(f % array)
              end if
           end if
@@ -1351,7 +1367,6 @@ module MPASAOS_field_routines
              f_cursor => f
              do while(associated(f_cursor))
                if(associated(f_cursor % array)) then
-                 !$acc exit data finalize delete(f_cursor % array)
                  deallocate(f_cursor % array)
                end if
    
@@ -1359,7 +1374,6 @@ module MPASAOS_field_routines
              end do
           else
              if(associated(f % array)) then
-                !$acc exit data finalize delete(f % array)
                 deallocate(f % array)
              end if
           end if
@@ -1403,7 +1417,6 @@ module MPASAOS_field_routines
              f_cursor => f
              do while(associated(f_cursor))
                if(associated(f_cursor % array)) then
-                 !$acc exit data finalize delete(f_cursor % array)
                  deallocate(f_cursor % array)
                end if
    
@@ -1411,7 +1424,6 @@ module MPASAOS_field_routines
              end do
           else
              if(associated(f % array)) then
-                !$acc exit data finalize delete(f % array)
                 deallocate(f % array)
              end if
           end if
@@ -2875,6 +2887,1172 @@ module MPASAOS_field_routines
       end if
 
    end subroutine mpas_allocate_mold_1dchar!}}}
+
+
+!***********************************************************************
+!
+!  routine mpas_mask_assign_pointer_field1d_mask1d_real
+!
+!> \brief   MPAS 1D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> Masks the source field using a masking array.
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_assign_pointer_field1d_mask1d_real(field, mask) !{{{
+
+      implicit none
+
+      type (field1DReal), intent(inout), pointer :: field
+      type (field1DInteger), intent(in), pointer :: mask
+
+      field % missingValueMask1d => mask
+
+   end subroutine mpas_mask_assign_pointer_field1d_mask1d_real
+
+!***********************************************************************
+!
+!  routine mpas_mask_assign_pointer_field2d_mask2d_real
+!
+!> \brief   MPAS 2D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> Masks the source field using a masking array.
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_assign_pointer_field2d_mask2d_real(field, mask) !{{{
+
+      implicit none
+
+      type (field2DReal), intent(inout), pointer :: field
+      type (field2DInteger), intent(in), pointer :: mask
+
+      field % missingValueMask2d => mask
+
+   end subroutine mpas_mask_assign_pointer_field2d_mask2d_real
+
+!***********************************************************************
+!
+!  routine mpas_mask_assign_pointer_field2d_mask1d_real
+!
+!> \brief   MPAS 2D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> Masks the source field using a masking array.
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_assign_pointer_field2d_mask1d_real(field, mask) !{{{
+
+      implicit none
+
+      type (field2DReal), intent(inout), pointer :: field
+      type (field1DInteger), intent(in), pointer :: mask
+
+      field % missingValueMask1d => mask
+
+   end subroutine mpas_mask_assign_pointer_field2d_mask1d_real
+
+!***********************************************************************
+!
+!  routine mpas_mask_assign_pointer_field3d_mask3d_real
+!
+!> \brief   MPAS 3D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> Masks the source field using a masking array.
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_assign_pointer_field3d_mask3d_real(field, mask) !{{{
+
+      implicit none
+
+      type (field3DReal), intent(inout), pointer :: field
+      type (field3DInteger), intent(in), pointer :: mask
+
+      field % missingValueMask3d => mask
+
+   end subroutine mpas_mask_assign_pointer_field3d_mask3d_real
+
+!***********************************************************************
+!
+!  routine mpas_mask_assign_pointer_field3d_mask2d_real
+!
+!> \brief   MPAS 3D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> 
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_assign_pointer_field3d_mask2d_real(field, mask) !{{{
+
+      implicit none
+
+      type (field3DReal), intent(inout), pointer :: field
+      type (field2DInteger), intent(in), pointer :: mask
+
+      field % missingValueMask2d => mask
+
+   end subroutine mpas_mask_assign_pointer_field3d_mask2d_real
+
+
+!***********************************************************************
+!
+!  routine mpas_mask_assign_pointer_field3d_mask1d_real
+!
+!> \brief   MPAS 3D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> 
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_assign_pointer_field3d_mask1d_real(field, mask) !{{{
+
+      implicit none
+
+      type (field3DReal), intent(inout), pointer :: field
+      type (field1DInteger), intent(in), pointer :: mask
+
+      field % missingValueMask1d => mask
+
+   end subroutine mpas_mask_assign_pointer_field3d_mask1d_real
+
+
+!***********************************************************************
+!
+!  routine mpas_mask_assign_pointer_field4d_mask3d_real
+!
+!> \brief   MPAS 4D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> 
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_assign_pointer_field4d_mask3d_real(field, mask) !{{{
+
+      implicit none
+
+      type (field4DReal), intent(inout), pointer :: field
+      type (field3DInteger), intent(in), pointer :: mask
+
+      field % missingValueMask3d => mask
+
+   end subroutine mpas_mask_assign_pointer_field4d_mask3d_real
+
+
+!***********************************************************************
+!
+!  routine mpas_mask_assign_pointer_field4d_mask2d_real
+!
+!> \brief   MPAS 4D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> 
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_assign_pointer_field4d_mask2d_real(field, mask) !{{{
+
+      implicit none
+
+      type (field4DReal), intent(inout), pointer :: field
+      type (field2DInteger), intent(in), pointer :: mask
+
+      field % missingValueMask2d => mask
+
+   end subroutine mpas_mask_assign_pointer_field4d_mask2d_real
+
+
+!***********************************************************************
+!
+!  routine mpas_mask_assign_pointer_field4d_mask1d_real
+!
+!> \brief   MPAS 4D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> 
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_assign_pointer_field4d_mask1d_real(field, mask) !{{{
+
+      implicit none
+
+      type (field4DReal), intent(inout), pointer :: field
+      type (field1DInteger), intent(in), pointer :: mask
+
+      field % missingValueMask1d => mask
+
+   end subroutine mpas_mask_assign_pointer_field4d_mask1d_real
+
+
+!***********************************************************************
+!
+!  routine mpas_mask_assign_pointer_field5d_mask3d_real
+!
+!> \brief   MPAS 4D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> 
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_assign_pointer_field5d_mask3d_real(field, mask) !{{{
+
+      implicit none
+
+      type (field5DReal), intent(inout), pointer :: field
+      type (field3DInteger), intent(in), pointer :: mask
+
+      field % missingValueMask3d => mask
+
+   end subroutine mpas_mask_assign_pointer_field5d_mask3d_real
+
+
+!***********************************************************************
+!
+!  routine mpas_mask_assign_pointer_field5d_mask2d_real
+!
+!> \brief   MPAS 4D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> 
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_assign_pointer_field5d_mask2d_real(field, mask) !{{{
+
+      implicit none
+
+      type (field5DReal), intent(inout), pointer :: field
+      type (field2DInteger), intent(in), pointer :: mask
+
+      field % missingValueMask2d => mask
+
+   end subroutine mpas_mask_assign_pointer_field5d_mask2d_real
+
+
+!***********************************************************************
+!
+!  routine mpas_mask_assign_pointer_field5d_mask1d_real
+!
+!> \brief   MPAS 4D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> 
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_assign_pointer_field5d_mask1d_real(field, mask) !{{{
+
+      implicit none
+
+      type (field5DReal), intent(inout), pointer :: field
+      type (field1DInteger), intent(in), pointer :: mask
+
+      field % missingValueMask1d => mask
+
+   end subroutine mpas_mask_assign_pointer_field5d_mask1d_real
+
+
+!***********************************************************************
+!
+!  routine mpas_mask_field1d_mask1d_real
+!
+!> \brief   MPAS 1D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> Masks the source field using a masking array.
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_field1d_mask1d_real(field, mask, maskedArray) !{{{
+
+      implicit none
+
+      type (field1DReal), intent(in), pointer :: field
+      type (field1DInteger), intent(in), pointer :: mask
+      real (kind=RKIND), dimension(:), intent(inout), pointer :: maskedArray
+
+      real (kind=RKIND), dimension(:), pointer :: fieldArray
+      integer, dimension(:), pointer :: maskingArray
+
+      integer, dimension(1) :: fieldDims
+      integer, dimension(1) :: maskDims
+      integer :: blockLength
+
+      blockLength = SIZE(maskedArray, dim=1)
+      fieldArray => field % array(1:blockLength)
+      maskingArray  => mask  % array(1:blockLength)
+
+      fieldDims = field % dimSizes
+      maskDims = mask % dimSizes
+
+      if (any(maskingArray == 1)) then
+         if (fieldDims(1) == maskDims(1) ) then
+            where (maskingArray == 0)
+               maskedArray = field % missingValue
+            endwhere
+         else
+            call mpas_log_write('Masking array and field array do not have'// &
+                                ' the same dimensions', MPAS_LOG_WARN)
+         endif
+      else
+         call mpas_log_write('Mask '//trim(field % maskName)//&
+                             ' is zeros, may not be initialized', MPAS_LOG_WARN)
+         return
+      endif
+
+   end subroutine mpas_mask_field1d_mask1d_real !}}}
+
+
+!***********************************************************************
+!
+!  routine mpas_mask_field2d_mask2d_real
+!
+!> \brief   MPAS 2D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> Masks the source field using a masking array.
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_field2d_mask2d_real(field, mask, maskedArray) !{{{
+
+      implicit none
+
+      type (field2DReal), intent(in), pointer :: field
+      type (field2DInteger), intent(in), pointer :: mask
+      real (kind=RKIND), dimension(:,:), intent(inout), pointer :: maskedArray
+
+      real (kind=RKIND), dimension(:,:), pointer :: fieldArray
+      integer, dimension(:,:), pointer :: maskingArray
+
+      integer, dimension(2) :: fieldDims
+      integer, dimension(2) :: maskDims
+      integer :: blockLength
+      character(len=100) :: log_string
+
+      blockLength = SIZE(maskedArray, dim=2)
+      fieldArray => field % array(:, 1:blockLength)
+      maskingArray  => mask  % array(:, 1:blockLength)
+
+      fieldDims = field % dimSizes
+      maskDims = mask % dimSizes
+      maskedArray = fieldArray
+
+      if (any(maskingArray == 1)) then
+         if (fieldDims(1) == maskDims(1) .and. fieldDims(2) == maskDims(2)) then
+            where (maskingArray == 0)
+               maskedArray = field % missingValue
+            endwhere
+         else
+            call mpas_log_write('Masking array and field array do not share dimensions', &
+                                MPAS_LOG_WARN)
+            return
+         endif
+      else
+         call mpas_log_write('Mask '//trim(field % maskName)//&
+                             ' is zeros, may not be initialized', MPAS_LOG_WARN)
+         return
+      endif
+
+   end subroutine mpas_mask_field2d_mask2d_real !}}}
+
+
+!***********************************************************************
+!
+!  routine mpas_mask_field2d_mask1d_real
+!
+!> \brief   MPAS 2D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> Masks the source field using a masking array.
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_field2d_mask1d_real(field, mask, maskedArray) !{{{
+
+      implicit none
+
+      type (field2DReal), intent(in), pointer :: field
+      type (field1DInteger), intent(in), pointer :: mask
+      real (kind=RKIND), dimension(:,:), intent(inout), pointer :: maskedArray
+
+      real (kind=RKIND), dimension(:,:), pointer :: fieldArray
+      integer, dimension(:), pointer :: maskingArray
+      integer :: i, j
+
+      integer, dimension(2) :: fieldDims
+      integer, dimension(1) :: maskDims
+      integer :: blockLength
+
+      blockLength = SIZE(maskedArray, dim=2)
+      fieldArray => field % array(:, 1:blockLength)
+
+      fieldDims = field % dimSizes
+      maskDims = mask % dimSizes
+      maskingArray  => mask % array
+
+      if (any(maskingArray == 1)) then
+         if (fieldDims(1) == maskDims(1)) then
+            maskingArray  => mask % array
+            do j = 1, SIZE(maskedArray, dim=2)
+               where (maskingArray == 0)
+                  maskedArray(:, j) = field % missingValue
+               endwhere
+            enddo
+         elseif (fieldDims(2) == maskDims(1)) then
+            maskingArray  => mask % array(1:blockLength)
+            do i = 1, SIZE(maskedArray, dim=1)
+               where (maskingArray == 0)
+                  maskedArray(i, :) = field % missingValue
+               endwhere
+            enddo
+         else
+            call mpas_log_write('Masking array and field array do not share dimensions', &
+                                MPAS_LOG_WARN)
+            return
+         endif
+      else
+         call mpas_log_write('Mask '//trim(field % maskName)//&
+                             ' is zeros, may not be initialized', MPAS_LOG_WARN)
+         return
+      endif
+
+   end subroutine mpas_mask_field2d_mask1d_real !}}}
+
+
+!***********************************************************************
+!
+!  routine mpas_mask_field3d_mask3d_real
+!
+!> \brief   MPAS 3D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> Masks the source field using a masking array.
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_field3d_mask3d_real(field, mask, maskedArray) !{{{
+
+      implicit none
+
+      type (field3DReal), intent(in), pointer :: field
+      type (field3DInteger), intent(in), pointer :: mask
+      real (kind=RKIND), dimension(:,:,:), intent(inout), pointer :: maskedArray
+
+      real (kind=RKIND), dimension(:,:,:), pointer :: fieldArray
+      integer, dimension(:,:,:), pointer :: maskingArray
+
+      integer, dimension(3) :: fieldDims
+      integer, dimension(3) :: maskDims
+      integer :: blockLength
+
+      blockLength = SIZE(maskedArray, dim=3)
+      fieldArray => field % array(:, :, 1:blockLength)
+      maskingArray  => mask  % array(:, :, 1:blockLength)
+
+      fieldDims = field % dimSizes
+      maskDims = mask % dimSizes
+
+      if (any(maskingArray == 1)) then
+         if (fieldDims(1) == maskDims(1) .and. &
+             fieldDims(2) == maskDims(2) .and. &
+             fieldDims(3) == maskDims(3) ) then
+            where (maskingArray == 0)
+               maskedArray = field % missingValue
+            endwhere
+         else
+            call mpas_log_write('Masking array and field array do not have the'// &
+                                ' same dimensions', MPAS_LOG_WARN)
+         endif
+      else
+         call mpas_log_write('Mask '//trim(field % maskName)//&
+                             ' is zeros, may not be initialized', MPAS_LOG_WARN)
+         return
+      endif
+
+   end subroutine mpas_mask_field3d_mask3d_real !}}}
+
+
+!***********************************************************************
+!
+!  routine mpas_mask_field3d_mask2d_real
+!
+!> \brief   MPAS 3D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> Masks the source field using a masking array.
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_field3d_mask2d_real(field, mask, maskedArray) !{{{
+
+      implicit none
+
+      type (field3DReal), intent(in), pointer :: field
+      type (field2DInteger), intent(in), pointer :: mask
+      real (kind=RKIND), dimension(:,:,:), intent(inout) :: maskedArray
+
+      real (kind=RKIND), dimension(:,:,:), pointer :: fieldArray
+      integer, dimension(:,:), pointer :: maskingArray
+      integer :: i, k
+
+      integer, dimension(3) :: fieldDims
+      integer, dimension(2) :: maskDims
+      integer :: blockLength
+      character(len=100) :: log_string
+
+      blockLength = SIZE(maskedArray, dim=3)
+      fieldArray => field % array(:, :, 1:blockLength)
+
+      fieldDims = field % dimSizes
+      maskDims = mask % dimSizes
+
+      if (any(mask % array == 1)) then
+         ! Here we require that the dimension order in mask match the dimension
+         ! order in field
+         if (fieldDims(3) == maskDims(2) .and. fieldDims(2) == maskDims(1)) then
+            maskingArray  => mask % array(:, 1:blockLength)
+            do i = 1, SIZE(maskedArray, dim=1)
+               where (maskingArray == 0)
+                  maskedArray(i, :, :) = field % missingValue
+               endwhere
+            enddo
+         elseif (fieldDims(2) == maskDims(2) .and. fieldDims(1) == maskDims(1)) then
+            maskingArray  => mask % array
+            do k = 1, SIZE(maskedArray, dim=3)
+               where (maskingArray == 0)
+                  maskedArray(:, :, k) = field % missingValue
+               endwhere
+            enddo
+         else
+            call mpas_log_write('Masking array and field array do not share dimensions', &
+                                MPAS_LOG_WARN)
+            return
+         endif
+      else
+         call mpas_log_write('Mask '//trim(field % maskName)//&
+                             ' is zeros, may not be initialized', MPAS_LOG_WARN)
+         return
+      endif
+
+   end subroutine mpas_mask_field3d_mask2d_real !}}}
+
+
+!***********************************************************************
+!
+!  routine mpas_mask_field3d_mask1d_real
+!
+!> \brief   MPAS 3D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> Masks the source field using a masking array.
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_field3d_mask1d_real(field, mask, maskedArray) !{{{
+
+      implicit none
+
+      type (field3DReal), intent(in), pointer :: field
+      type (field1DInteger), intent(in), pointer :: mask
+      real (kind=RKIND), dimension(:,:,:), intent(inout) :: maskedArray
+
+      real (kind=RKIND), dimension(:,:,:), pointer :: fieldArray
+      integer, dimension(:), pointer :: maskingArray
+      integer :: i, j, k
+
+      integer, dimension(3) :: fieldDims
+      integer, dimension(1) :: maskDims
+      integer :: blockLength
+
+      blockLength = SIZE(maskedArray, dim=3)
+      fieldArray => field % array(:, :, 1:blockLength)
+
+      fieldDims = field % dimSizes
+      maskDims = mask % dimSizes
+
+      if (any(mask % array == 1)) then
+         if (fieldDims(1) == maskDims(1)) then
+            maskingArray  => mask % array
+            do j = 1, SIZE(maskedArray, dim=2)
+               do k = 1, SIZE(maskedArray, dim=3)
+                  where (maskingArray == 0)
+                     maskedArray(:, j, k) = field % missingValue
+                  endwhere
+               enddo
+            enddo
+         elseif (fieldDims(2) == maskDims(1)) then
+            maskingArray  => mask % array
+            do i = 1, SIZE(maskedArray, dim=1)
+               do k = 1, SIZE(maskedArray, dim=3)
+                  where (maskingArray == 0)
+                     maskedArray(i, :, k) = field % missingValue
+                  endwhere
+               enddo
+            enddo
+         elseif (fieldDims(3) == maskDims(1)) then
+            maskingArray  => mask % array(1:blockLength)
+            do i = 1, SIZE(maskedArray, dim=1)
+               do j = 1, SIZE(maskedArray, dim=2)
+                  where (maskingArray == 0)
+                     maskedArray(i, j, :) = field % missingValue
+                  endwhere
+               enddo
+            enddo
+         else
+            call mpas_log_write('Masking array and field array do not share'// &
+                                ' a dimension', MPAS_LOG_WARN)
+            return
+         endif
+      else
+         call mpas_log_write('Mask '//trim(field % maskName)//&
+                             ' is zeros, may not be initialized', MPAS_LOG_WARN)
+         return
+      endif
+
+   end subroutine mpas_mask_field3d_mask1d_real !}}}
+
+
+!***********************************************************************
+!
+!  routine mpas_mask_field4d_mask3d_real
+!
+!> \brief   MPAS 4D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> Masks the source field using a masking array.
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_field4d_mask3d_real(field, mask, maskedArray) !{{{
+
+      implicit none
+
+      type (field4DReal), intent(in), pointer :: field
+      type (field3DInteger), intent(in), pointer :: mask
+      real (kind=RKIND), dimension(:,:,:,:), intent(inout), pointer :: maskedArray
+
+      real (kind=RKIND), dimension(:,:,:,:), pointer :: fieldArray
+      integer, dimension(:,:,:), pointer :: maskingArray
+
+      integer, dimension(4) :: fieldDims
+      integer, dimension(3) :: maskDims
+      integer :: blockLength
+      integer :: i, k
+
+      blockLength = SIZE(maskedArray, dim=4)
+      fieldArray => field % array(:,:,:,1:blockLength)
+
+      fieldDims = field % dimSizes
+      maskDims = mask % dimSizes
+
+      if (any(mask % array == 1)) then
+         ! Here we require that the dimension order in mask match the dimension
+         ! order in field
+         if (fieldDims(2) == maskDims(1) .and. &
+             fieldDims(3) == maskDims(2) .and. &
+             fieldDims(4) == maskDims(3) ) then
+            maskingArray => mask % array(:,:,1:blockLength)
+            do i = 1, SIZE(maskedArray, dim=1)
+               where (maskingArray == 0)
+                  maskedArray(i,:,:,:) = field % missingValue
+               endwhere
+            enddo
+         elseif (fieldDims(1) == maskDims(1) .and. &
+                 fieldDims(2) == maskDims(2) .and. &
+                 fieldDims(3) == maskDims(3) ) then
+            maskingArray => mask % array
+            do k = 1, SIZE(maskedArray, dim=4)
+               where (maskingArray == 0)
+                  maskedArray(:,:,:,k) = field % missingValue
+               endwhere
+            enddo
+         else
+            call mpas_log_write('Masking array and field array do not share'// &
+                                ' dimensions', MPAS_LOG_WARN)
+            return
+         endif
+      else
+         call mpas_log_write('Mask '//trim(field % maskName)//&
+                             ' is zeros, may not be initialized', MPAS_LOG_WARN)
+         return
+      endif
+
+   end subroutine mpas_mask_field4d_mask3d_real !}}}
+
+
+!***********************************************************************
+!
+!  routine mpas_mask_field4d_mask2d_real
+!
+!> \brief   MPAS 3D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> Masks the source field using a masking array.
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_field4d_mask2d_real(field, mask, maskedArray) !{{{
+
+      implicit none
+
+      type (field4DReal), intent(in), pointer :: field
+      type (field2DInteger), intent(in), pointer :: mask
+      real (kind=RKIND), dimension(:,:,:,:), intent(inout) :: maskedArray
+
+      real (kind=RKIND), dimension(:,:,:,:), pointer :: fieldArray
+      integer, dimension(:,:), pointer :: maskingArray
+      integer :: i, j, k
+
+      integer, dimension(4) :: fieldDims
+      integer, dimension(2) :: maskDims
+      integer :: blockLength
+      character(len=100) :: log_string
+
+      blockLength = SIZE(maskedArray, dim=4)
+      fieldArray => field % array(:, :, :, 1:blockLength)
+
+      fieldDims = field % dimSizes
+      maskDims = mask % dimSizes
+
+      if (any(mask % array == 1)) then
+         ! Here we require that the dimension order in mask match the dimension
+         ! order in field
+         if (fieldDims(2) == maskDims(2) .and. fieldDims(1) == maskDims(1)) then
+            maskingArray => mask % array
+            do j = 1, SIZE(maskedArray, dim=3)
+            do k = 1, SIZE(maskedArray, dim=4)
+               where (maskingArray == 0)
+                  maskedArray(:, :, j, k) = field % missingValue
+               endwhere
+            enddo
+            enddo
+         elseif (fieldDims(3) == maskDims(2) .and. fieldDims(2) == maskDims(1)) then
+            maskingArray  => mask % array
+            do i = 1, SIZE(maskedArray, dim=1)
+            do k = 1, SIZE(maskedArray, dim=4)
+               where (maskingArray == 0)
+                  maskedArray(i, :, :, k) = field % missingValue
+               endwhere
+            enddo
+            enddo
+         elseif (fieldDims(3) == maskDims(2) .and. fieldDims(4) == maskDims(1)) then
+            maskingArray => mask % array(:, 1:blockLength)
+            do i = 1, SIZE(maskedArray, dim=1)
+            do j = 1, SIZE(maskedArray, dim=2)
+               where (maskingArray == 0)
+                  maskedArray(i, j, :, :) = field % missingValue
+               endwhere
+            enddo
+            enddo
+         else
+            call mpas_log_write('Masking array and field array do not share'// &
+                                ' dimensions', MPAS_LOG_WARN)
+            return
+         endif
+      else
+         call mpas_log_write('Mask '//trim(field % maskName)//&
+                             ' is zeros, may not be initialized', MPAS_LOG_WARN)
+         return
+      endif
+
+   end subroutine mpas_mask_field4d_mask2d_real !}}}
+
+
+!***********************************************************************
+!
+!  routine mpas_mask_field4d_mask1d_real
+!
+!> \brief   MPAS 3D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> Masks the source field using a masking array.
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_field4d_mask1d_real(field, mask, maskedArray) !{{{
+
+      implicit none
+
+      type (field4DReal), intent(in), pointer :: field
+      type (field1DInteger), intent(in), pointer :: mask
+      real (kind=RKIND), dimension(:,:,:,:), intent(inout) :: maskedArray
+
+      real (kind=RKIND), dimension(:,:,:,:), pointer :: fieldArray
+      integer, dimension(:), pointer :: maskingArray
+      integer :: i, j, k
+
+      integer, dimension(4) :: fieldDims
+      integer, dimension(1) :: maskDims
+      integer :: blockLength
+
+      blockLength = SIZE(maskedArray, dim=4)
+      fieldArray => field % array(:, :, :, 1:blockLength)
+
+      fieldDims = field % dimSizes
+      maskDims = mask % dimSizes
+
+      if (any(mask % array == 1)) then
+         ! Here we require that the dimension order in mask match the dimension
+         ! order in field
+         if (fieldDims(1) == maskDims(1)) then
+            maskingArray => mask % array
+            do i = 1, SIZE(maskedArray, dim=2)
+            do j = 1, SIZE(maskedArray, dim=3)
+            do k = 1, SIZE(maskedArray, dim=4)
+               where (maskingArray == 0)
+                  maskedArray(:, i, j, k) = field % missingValue
+               endwhere
+            enddo
+            enddo
+            enddo
+         elseif (fieldDims(2) == maskDims(1)) then
+            maskingArray => mask % array
+            do i = 1, SIZE(maskedArray, dim=1)
+            do j = 1, SIZE(maskedArray, dim=3)
+            do k = 1, SIZE(maskedArray, dim=4)
+               where (maskingArray == 0)
+                  maskedArray(i, :, j, k) = field % missingValue
+               endwhere
+            enddo
+            enddo
+            enddo
+         elseif (fieldDims(3) == maskDims(1)) then
+            maskingArray => mask % array
+            do i = 1, SIZE(maskedArray, dim=1)
+            do j = 1, SIZE(maskedArray, dim=2)
+            do k = 1, SIZE(maskedArray, dim=4)
+               where (maskingArray == 0)
+                  maskedArray(i, j, :, k) = field % missingValue
+               endwhere
+            enddo
+            enddo
+            enddo
+         elseif (fieldDims(4) == maskDims(1)) then
+            maskingArray => mask % array(1:blockLength)
+            do i = 1, SIZE(maskedArray, dim=1)
+            do j = 1, SIZE(maskedArray, dim=2)
+            do k = 1, SIZE(maskedArray, dim=3)
+               where (maskingArray == 0)
+                  maskedArray(i, j, k, :) = field % missingValue
+               endwhere
+            enddo
+            enddo
+            enddo
+         else
+            call mpas_log_write('Masking array and field array do not share'// &
+                                ' a dimension', MPAS_LOG_WARN)
+            return
+         endif
+      else
+         call mpas_log_write('Mask '//trim(field % maskName)//&
+                             ' is zeros, may not be initialized', MPAS_LOG_WARN)
+         return
+      endif
+
+   end subroutine mpas_mask_field4d_mask1d_real !}}}
+
+
+!***********************************************************************
+!
+!  routine mpas_mask_field5d_mask3d_real
+!
+!> \brief   MPAS 4D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> Masks the source field using a masking array.
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_field5d_mask3d_real(field, mask, maskedArray) !{{{
+
+      implicit none
+
+      type (field5DReal), intent(in), pointer :: field
+      type (field3DInteger), intent(in), pointer :: mask
+      real (kind=RKIND), dimension(:,:,:,:,:), intent(inout), pointer :: maskedArray
+
+      real (kind=RKIND), dimension(:,:,:,:,:), pointer :: fieldArray
+      integer, dimension(:,:,:), pointer :: maskingArray
+
+      integer, dimension(5) :: fieldDims
+      integer, dimension(3) :: maskDims
+      integer :: blockLength
+      integer :: i, k
+
+      blockLength = SIZE(maskedArray, dim=5)
+      fieldArray => field % array(:,:,:,:,1:blockLength)
+
+      fieldDims = field % dimSizes
+      maskDims = mask % dimSizes
+
+      if (any(mask % array == 1)) then
+         ! Here we require that the dimension order in mask match the dimension
+         ! order in field
+         if (fieldDims(1) == maskDims(1) .and. &
+             fieldDims(2) == maskDims(2) .and. &
+             fieldDims(3) == maskDims(3) ) then
+            maskingArray => mask % array
+            do i = 1, SIZE(maskedArray, dim=4)
+            do k = 1, SIZE(maskedArray, dim=5)
+               where (maskingArray == 0)
+                  maskedArray(:,:,:,i,k) = field % missingValue
+               endwhere
+            enddo
+            enddo
+         elseif (fieldDims(2) == maskDims(1) .and. &
+                 fieldDims(3) == maskDims(2) .and. &
+                 fieldDims(4) == maskDims(3) ) then
+            maskingArray => mask % array
+            do i = 1, SIZE(maskedArray, dim=1)
+            do k = 1, SIZE(maskedArray, dim=5)
+               where (maskingArray == 0)
+                  maskedArray(i,:,:,:,k) = field % missingValue
+               endwhere
+            enddo
+            enddo
+         elseif (fieldDims(3) == maskDims(1) .and. &
+                 fieldDims(4) == maskDims(2) .and. &
+                 fieldDims(5) == maskDims(3) ) then
+            maskingArray => mask % array(:,:,1:blockLength)
+            do i = 1, SIZE(maskedArray, dim=1)
+            do k = 1, SIZE(maskedArray, dim=2)
+               where (maskingArray == 0)
+                  maskedArray(i,k,:,:,:) = field % missingValue
+               endwhere
+            enddo
+            enddo
+         else
+            call mpas_log_write('Masking array and field array do not share'// &
+                                ' a dimension', MPAS_LOG_WARN)
+            return
+         endif
+      else
+         call mpas_log_write('Mask '//trim(field % maskName)//&
+                             ' is zeros, may not be initialized', MPAS_LOG_WARN)
+         return
+      endif
+
+   end subroutine mpas_mask_field5d_mask3d_real !}}}
+
+
+!***********************************************************************
+!
+!  routine mpas_mask_field5d_mask2d_real
+!
+!> \brief   MPAS 3D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> Masks the source field using a masking array.
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_field5d_mask2d_real(field, mask, maskedArray) !{{{
+
+      implicit none
+
+      type (field5DReal), intent(in), pointer :: field
+      type (field2DInteger), intent(in), pointer :: mask
+      real (kind=RKIND), dimension(:,:,:,:,:), intent(inout) :: maskedArray
+
+      real (kind=RKIND), dimension(:,:,:,:,:), pointer :: fieldArray
+      integer, dimension(:,:), pointer :: maskingArray
+
+      integer, dimension(5) :: fieldDims
+      integer, dimension(2) :: maskDims
+      integer :: blockLength
+      integer :: i, j, k
+
+      blockLength = SIZE(maskedArray, dim=5)
+      fieldArray => field % array(:,:,:,:,1:blockLength)
+
+      fieldDims = field % dimSizes
+      maskDims = mask % dimSizes
+
+      if (any(mask % array == 1)) then
+         ! Here we require that the dimension order in mask match the dimension
+         ! order in field
+         if (fieldDims(2) == maskDims(2) .and. fieldDims(1) == maskDims(1)) then
+            maskingArray => mask % array
+            do i = 1, SIZE(maskedArray, dim=3)
+            do j = 1, SIZE(maskedArray, dim=4)
+            do k = 1, SIZE(maskedArray, dim=5)
+               where (maskingArray == 0)
+                  maskedArray(:,:,i,j,k) = field % missingValue
+               endwhere
+            enddo
+            enddo
+            enddo
+         elseif (fieldDims(3) == maskDims(2) .and. fieldDims(2) == maskDims(1)) then
+            maskingArray => mask % array
+            do i = 1, SIZE(maskedArray, dim=1)
+            do j = 1, SIZE(maskedArray, dim=4)
+            do k = 1, SIZE(maskedArray, dim=5)
+               where (maskingArray == 0)
+                  maskedArray(i,:,:,j,k) = field % missingValue
+               endwhere
+            enddo
+            enddo
+            enddo
+         elseif (fieldDims(4) == maskDims(2) .and. fieldDims(3) == maskDims(1)) then
+            maskingArray => mask % array
+            do i = 1, SIZE(maskedArray, dim=1)
+            do j = 1, SIZE(maskedArray, dim=2)
+            do k = 1, SIZE(maskedArray, dim=5)
+               where (maskingArray == 0)
+                  maskedArray(i,j,:,:,k) = field % missingValue
+               endwhere
+            enddo
+            enddo
+            enddo
+         elseif (fieldDims(5) == maskDims(2) .and. fieldDims(4) == maskDims(1)) then
+            maskingArray => mask % array(:, 1:blockLength)
+            do i = 1, SIZE(maskedArray, dim=1)
+            do j = 1, SIZE(maskedArray, dim=2)
+            do k = 1, SIZE(maskedArray, dim=3)
+               where (maskingArray == 0)
+                  maskedArray(i,j,k,:,:) = field % missingValue
+               endwhere
+            enddo
+            enddo
+            enddo
+         else
+            call mpas_log_write('Masking array and field array do not share'// &
+                                ' a dimension', MPAS_LOG_WARN)
+            return
+         endif
+      else
+         call mpas_log_write('Mask '//trim(field % maskName)//&
+                             ' is zeros, may not be initialized', MPAS_LOG_WARN)
+         return
+      endif
+
+   end subroutine mpas_mask_field5d_mask2d_real !}}}
+
+
+!***********************************************************************
+!
+!  routine mpas_mask_field5d_mask1d_real
+!
+!> \brief   MPAS 3D real field mask routine.
+!> \author  Carolyn Begeman, Adrian Turner
+!> \date    05/17/22
+!> \details 
+!> Masks the source field using a masking array.
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_mask_field5d_mask1d_real(field, mask, maskedArray) !{{{
+
+      implicit none
+
+      type (field5DReal), intent(in), pointer :: field
+      type (field1DInteger), intent(in), pointer :: mask
+      real (kind=RKIND), dimension(:,:,:,:,:), intent(inout) :: maskedArray
+
+      real (kind=RKIND), dimension(:,:,:,:,:), pointer :: fieldArray
+      integer, dimension(:), pointer :: maskingArray
+      integer :: i, j, k, p
+
+      integer, dimension(5) :: fieldDims
+      integer, dimension(1) :: maskDims
+      integer :: blockLength
+
+      blockLength = SIZE(maskedArray, dim=5)
+      fieldArray => field % array(:,:,:,:,1:blockLength)
+
+      fieldDims = field % dimSizes
+      maskDims = mask % dimSizes
+
+      if (any(mask % array == 1)) then
+         ! Here we require that the dimension order in mask match the dimension
+         ! order in field
+         if (fieldDims(1) == maskDims(1)) then
+            maskingArray => mask % array
+            do i = 1, SIZE(maskedArray, dim=2)
+            do j = 1, SIZE(maskedArray, dim=3)
+            do k = 1, SIZE(maskedArray, dim=4)
+            do p = 1, SIZE(maskedArray, dim=5)
+               where (maskingArray == 0)
+                  maskedArray(:,i,j,k,p) = field % missingValue
+               endwhere
+            enddo
+            enddo
+            enddo
+            enddo
+         elseif (fieldDims(2) == maskDims(1)) then
+            maskingArray => mask % array
+            do i = 1, SIZE(maskedArray, dim=1)
+            do j = 1, SIZE(maskedArray, dim=3)
+            do k = 1, SIZE(maskedArray, dim=4)
+            do p = 1, SIZE(maskedArray, dim=5)
+               where (maskingArray == 0)
+                  maskedArray(i,:,j,k,p) = field % missingValue
+               endwhere
+            enddo
+            enddo
+            enddo
+            enddo
+         elseif (fieldDims(3) == maskDims(1)) then
+            maskingArray => mask % array
+            do i = 1, SIZE(maskedArray, dim=1)
+            do j = 1, SIZE(maskedArray, dim=2)
+            do k = 1, SIZE(maskedArray, dim=4)
+            do p = 1, SIZE(maskedArray, dim=5)
+               where (maskingArray == 0)
+                  maskedArray(i,j,:,k,p) = field % missingValue
+               endwhere
+            enddo
+            enddo
+            enddo
+            enddo
+         elseif (fieldDims(4) == maskDims(1)) then
+            maskingArray => mask % array
+            do i = 1, SIZE(maskedArray, dim=1)
+            do j = 1, SIZE(maskedArray, dim=2)
+            do k = 1, SIZE(maskedArray, dim=3)
+            do p = 1, SIZE(maskedArray, dim=5)
+               where (maskingArray == 0)
+                  maskedArray(i,j,k,:,p) = field % missingValue
+               endwhere
+            enddo
+            enddo
+            enddo
+            enddo
+         elseif (fieldDims(5) == maskDims(1)) then
+            maskingArray => mask % array(1:blockLength)
+            do i = 1, SIZE(maskedArray, dim=1)
+            do j = 1, SIZE(maskedArray, dim=2)
+            do k = 1, SIZE(maskedArray, dim=3)
+            do p = 1, SIZE(maskedArray, dim=4)
+               where (maskingArray == 0)
+                  maskedArray(i,j,k,p,:) = field % missingValue
+               endwhere
+            enddo
+            enddo
+            enddo
+            enddo
+         else
+            call mpas_log_write('Masking array and field array do not share'// &
+                                ' a dimension', MPAS_LOG_WARN)
+            return
+         endif
+      else
+         call mpas_log_write('Mask '//trim(field % maskName)//&
+                             ' is zeros, may not be initialized', MPAS_LOG_WARN)
+         return
+      endif
+
+   end subroutine mpas_mask_field5d_mask1d_real !}}}
+
 
 !***********************************************************************
 !

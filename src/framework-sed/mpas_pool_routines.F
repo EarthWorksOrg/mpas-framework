@@ -3,7 +3,7 @@
 !
 ! Unless noted otherwise source code is licensed under the BSD license.
 ! Additional copyright and license information can be found in the LICENSE file
-! distributed with this code, or at http://mpas-dev.github.com/license.html
+! distributed with this code, or at http://mpas-dev.github.io/license.html
 !
 !***********************************************************************
 !
@@ -81,21 +81,6 @@ module MPASAOS_pool_routines
       module procedure mpas_pool_get_array_1d_char
    end interface
 
-   interface mpas_pool_get_array_gpu
-      module procedure mpas_pool_get_array_0d_real_gpu
-      module procedure mpas_pool_get_array_1d_real_gpu
-      module procedure mpas_pool_get_array_2d_real_gpu
-      module procedure mpas_pool_get_array_3d_real_gpu
-      module procedure mpas_pool_get_array_4d_real_gpu
-      module procedure mpas_pool_get_array_5d_real_gpu
-      module procedure mpas_pool_get_array_0d_int_gpu
-      module procedure mpas_pool_get_array_1d_int_gpu
-      module procedure mpas_pool_get_array_2d_int_gpu
-      module procedure mpas_pool_get_array_3d_int_gpu
-      module procedure mpas_pool_get_array_0d_char_gpu
-      module procedure mpas_pool_get_array_1d_char_gpu
-   end interface
-
    interface mpas_pool_add_config
       module procedure mpas_pool_add_config_real
       module procedure mpas_pool_add_config_int
@@ -110,6 +95,13 @@ module MPASAOS_pool_routines
       module procedure mpas_pool_get_config_logical
    end interface
 
+   interface mpas_pool_get_config_scalar
+      module procedure mpas_pool_get_config_real_scalar
+      module procedure mpas_pool_get_config_int_scalar
+      module procedure mpas_pool_get_config_char_scalar
+      module procedure mpas_pool_get_config_logical_scalar
+   end interface
+
    interface mpas_pool_add_dimension
       module procedure mpas_pool_add_dimension_0d
       module procedure mpas_pool_add_dimension_1d
@@ -121,10 +113,6 @@ module MPASAOS_pool_routines
    end interface
 
    integer :: currentErrorLevel = MPAS_POOL_SILENT
-
-#ifdef CORE_ATMOSPHERE
-    integer, parameter, private :: ROLE_INTEGRATE = ibset(0,0)
-#endif
 
    contains
 
@@ -4215,46 +4203,6 @@ module MPASAOS_pool_routines
 
    end subroutine mpas_pool_get_array_0d_real!}}}
 
-   subroutine mpas_pool_get_array_0d_real_gpu(inPool, key, scalar, timeLevel)!{{{
-
-      implicit none
-
-      type (mpas_pool_type), intent(in) :: inPool
-      character (len=*), intent(in) :: key
-      real (kind=RKIND), pointer :: scalar
-      integer, intent(in), optional :: timeLevel
-
-      type (field0DReal), pointer :: field
-#ifdef MPAS_CAM_DYCORE
-      
-      call mpas_pool_get_field_0d_real(inPool, key, field, timeLevel)
-
-
-      nullify(scalar)
-      if (associated(field)) then 
-              scalar => field % scalar
-              !$acc enter data copyin(field%scalar)
-      end if
-#else
-
-      type (mpas_coupler_type), pointer :: coupler
-      
-      call mpas_pool_get_field_0d_real(inPool, key, field, timeLevel)
-
-      coupler => field%block%domain%mpas_cpl
-
-      nullify(scalar)
-      if (associated(field)) then 
-              scalar => field % scalar
-#ifdef CORE_ATMOSPHERE
-              if (coupler % role_includes(ROLE_INTEGRATE)) then
-                      !$acc enter data copyin(field%scalar)
-              end if
-#endif
-      end if
-#endif
-   end subroutine mpas_pool_get_array_0d_real_gpu!}}}
-
 
 !-----------------------------------------------------------------------
 !  subroutine mpas_pool_get_array_1d_real
@@ -4285,44 +4233,6 @@ module MPASAOS_pool_routines
 
    end subroutine mpas_pool_get_array_1d_real!}}}
 
-   subroutine mpas_pool_get_array_1d_real_gpu(inPool, key, array, timeLevel)!{{{
-
-      implicit none
-
-      type (mpas_pool_type), intent(in) :: inPool
-      character (len=*), intent(in) :: key
-      real (kind=RKIND), dimension(:), pointer :: array
-      integer, intent(in), optional :: timeLevel
-
-      type (field1DReal), pointer :: field
-#ifdef MPAS_CAM_DYCORE
-
-      call mpas_pool_get_field_1d_real(inPool, key, field, timeLevel)
-
-      nullify(array)
-      if (associated(field)) then 
-              array => field % array
-             !$acc enter data copyin(field%array)
-      end if
-#else
-      type (mpas_coupler_type), pointer :: coupler
-
-
-      call mpas_pool_get_field_1d_real(inPool, key, field, timeLevel)
-
-      nullify(array)
-      if (associated(field)) then 
-              coupler => field%block%domain%mpas_cpl
-              array => field % array
-#ifdef CORE_ATMOSPHERE
-              if (coupler % role_includes(ROLE_INTEGRATE)) then
-                      !$acc enter data copyin(field%array)
-              end if
-#endif
-      end if
-#endif
-   end subroutine mpas_pool_get_array_1d_real_gpu!}}}
-
 
 !-----------------------------------------------------------------------
 !  subroutine mpas_pool_get_array_2d_real
@@ -4352,45 +4262,6 @@ module MPASAOS_pool_routines
       if (associated(field)) array => field % array
 
    end subroutine mpas_pool_get_array_2d_real!}}}
-
-   subroutine mpas_pool_get_array_2d_real_gpu(inPool, key, array, timeLevel)!{{{
-
-      implicit none
-
-      type (mpas_pool_type), intent(in) :: inPool
-      character (len=*), intent(in) :: key
-      real (kind=RKIND), dimension(:,:), pointer :: array
-      integer, intent(in), optional :: timeLevel
-
-      type (field2DReal), pointer :: field
-
-#ifdef MPAS_CAM_DYCORE
-
-      call mpas_pool_get_field_2d_real(inPool, key, field, timeLevel)
-
-      nullify(array)
-      if (associated(field)) then 
-              array => field % array
-                      !$acc enter data copyin(field%array)
-      end if
-#else
-      type (mpas_coupler_type), pointer :: coupler
-
-
-      call mpas_pool_get_field_2d_real(inPool, key, field, timeLevel)
-
-      nullify(array)
-      if (associated(field)) then 
-              coupler => field%block%domain%mpas_cpl
-              array => field % array
-#ifdef CORE_ATMOSPHERE
-              if (coupler % role_includes(ROLE_INTEGRATE)) then
-                      !$acc enter data copyin(field%array)
-              end if
-#endif
-      end if
-#endif
-   end subroutine mpas_pool_get_array_2d_real_gpu!}}}
 
 
 !-----------------------------------------------------------------------
@@ -4423,45 +4294,6 @@ module MPASAOS_pool_routines
    end subroutine mpas_pool_get_array_3d_real!}}}
 
 
-   subroutine mpas_pool_get_array_3d_real_gpu(inPool, key, array, timeLevel)!{{{
-
-      implicit none
-
-      type (mpas_pool_type), intent(in) :: inPool
-      character (len=*), intent(in) :: key
-      real (kind=RKIND), dimension(:,:,:), pointer :: array
-      integer, intent(in), optional :: timeLevel
-
-      type (field3DReal), pointer :: field
-
-#ifdef MPAS_CAM_DYCORE
-      call mpas_pool_get_field_3d_real(inPool, key, field, timeLevel)
-
-      nullify(array)
-      if (associated(field)) then 
-              array => field % array
-              !$acc enter data copyin(field%array)
-      end if
-#else
-
-      type (mpas_coupler_type), pointer :: coupler
-
-
-      call mpas_pool_get_field_3d_real(inPool, key, field, timeLevel)
-
-      nullify(array)
-      if (associated(field)) then 
-              coupler => field%block%domain%mpas_cpl
-              array => field % array
-#ifdef CORE_ATMOSPHERE
-              if (coupler % role_includes(ROLE_INTEGRATE)) then
-                      !$acc enter data copyin(field%array)
-              end if
-#endif
-      end if
-#endif
-   end subroutine mpas_pool_get_array_3d_real_gpu!}}}
-
 !-----------------------------------------------------------------------
 !  subroutine mpas_pool_get_array_4d_real
 !
@@ -4490,44 +4322,6 @@ module MPASAOS_pool_routines
       if (associated(field)) array => field % array
 
    end subroutine mpas_pool_get_array_4d_real!}}}
-
-   subroutine mpas_pool_get_array_4d_real_gpu(inPool, key, array, timeLevel)!{{{
-
-      implicit none
-
-      type (mpas_pool_type), intent(in) :: inPool
-      character (len=*), intent(in) :: key
-      real (kind=RKIND), dimension(:,:,:,:), pointer :: array
-      integer, intent(in), optional :: timeLevel
-
-      type (field4DReal), pointer :: field
-
-#ifdef MPAS_CAM_DYCORE
-      call mpas_pool_get_field_4d_real(inPool, key, field, timeLevel)
-
-      nullify(array)
-      if (associated(field)) then 
-              array => field % array
-              !$acc enter data copyin(field%array)
-      end if
-#else
-      type (mpas_coupler_type), pointer :: coupler
-
-
-      call mpas_pool_get_field_4d_real(inPool, key, field, timeLevel)
-
-      nullify(array)
-      if (associated(field)) then 
-              coupler => field%block%domain%mpas_cpl
-              array => field % array
-#ifdef CORE_ATMOSPHERE
-              if (coupler % role_includes(ROLE_INTEGRATE)) then
-                      !$acc enter data copyin(field%array)
-              end if
-#endif
-      end if
-#endif
-   end subroutine mpas_pool_get_array_4d_real_gpu!}}}
 
 
 !-----------------------------------------------------------------------
@@ -4559,45 +4353,6 @@ module MPASAOS_pool_routines
 
    end subroutine mpas_pool_get_array_5d_real!}}}
 
-   subroutine mpas_pool_get_array_5d_real_gpu(inPool, key, array, timeLevel)!{{{
-
-      implicit none
-
-      type (mpas_pool_type), intent(in) :: inPool
-      character (len=*), intent(in) :: key
-      real (kind=RKIND), dimension(:,:,:,:,:), pointer :: array
-      integer, intent(in), optional :: timeLevel
-
-      type (field5DReal), pointer :: field
-
-
-#ifdef MPAS_CAM_DYCORE
-      call mpas_pool_get_field_5d_real(inPool, key, field, timeLevel)
-
-      nullify(array)
-      if (associated(field)) then 
-              array => field % array
-                      !$acc enter data copyin(field%array)
-      end if
-#else
-      type (mpas_coupler_type), pointer :: coupler
-
-
-      call mpas_pool_get_field_5d_real(inPool, key, field, timeLevel)
-
-      nullify(array)
-      if (associated(field)) then 
-              coupler => field%block%domain%mpas_cpl
-              array => field % array
-#ifdef CORE_ATMOSPHERE
-              if (coupler % role_includes(ROLE_INTEGRATE)) then
-                      !$acc enter data copyin(field%array)
-              end if
-#endif
-      end if
-#endif
-   end subroutine mpas_pool_get_array_5d_real_gpu!}}}
-
 
 !-----------------------------------------------------------------------
 !  subroutine mpas_pool_get_array_0d_int
@@ -4627,46 +4382,6 @@ module MPASAOS_pool_routines
       if (associated(field)) scalar => field % scalar
 
    end subroutine mpas_pool_get_array_0d_int!}}}
-
-   subroutine mpas_pool_get_array_0d_int_gpu(inPool, key, scalar, timeLevel)!{{{
-
-      implicit none
-
-      type (mpas_pool_type), intent(in) :: inPool
-      character (len=*), intent(in) :: key
-      integer, pointer :: scalar
-      integer, intent(in), optional :: timeLevel
-
-      type (field0DInteger), pointer :: field
-
-#ifdef MPAS_CAM_DYCORE
-
-      call mpas_pool_get_field_0d_int(inPool, key, field, timeLevel)
-
-      nullify(scalar)
-      if (associated(field)) then 
-              scalar => field % scalar
-                      !$acc enter data copyin(field%scalar)
-      end if
-#else
-
-      type (mpas_coupler_type), pointer :: coupler
-
-
-      call mpas_pool_get_field_0d_int(inPool, key, field, timeLevel)
-
-      nullify(scalar)
-      if (associated(field)) then 
-              coupler => field%block%domain%mpas_cpl
-              scalar => field % scalar
-#ifdef CORE_ATMOSPHERE
-              if (coupler % role_includes(ROLE_INTEGRATE)) then
-                      !$acc enter data copyin(field%scalar)
-              end if
-#endif
-      end if
-#endif
-   end subroutine mpas_pool_get_array_0d_int_gpu!}}}
 
 
 !-----------------------------------------------------------------------
@@ -4698,43 +4413,6 @@ module MPASAOS_pool_routines
 
    end subroutine mpas_pool_get_array_1d_int!}}}
 
-   subroutine mpas_pool_get_array_1d_int_gpu(inPool, key, array, timeLevel)!{{{
-
-      implicit none
-
-      type (mpas_pool_type), intent(in) :: inPool
-      character (len=*), intent(in) :: key
-      integer, dimension(:), pointer :: array
-      integer, intent(in), optional :: timeLevel
-
-      type (field1DInteger), pointer :: field
-#ifdef MPAS_CAM_DYCORE
-
-      call mpas_pool_get_field_1d_int(inPool, key, field, timeLevel)
-
-      nullify(array)
-      if (associated(field)) then 
-              array => field % array
-                      !$acc enter data copyin(field%array)
-      end if
-#else
-      type (mpas_coupler_type), pointer :: coupler
-
-      call mpas_pool_get_field_1d_int(inPool, key, field, timeLevel)
-
-      nullify(array)
-      if (associated(field)) then 
-              coupler => field%block%domain%mpas_cpl
-              array => field % array
-#ifdef CORE_ATMOSPHERE
-              if (coupler % role_includes(ROLE_INTEGRATE)) then
-                      !$acc enter data copyin(field%array)
-              end if
-#endif
-      end if
-#endif
-   end subroutine mpas_pool_get_array_1d_int_gpu!}}}
-
 
 !-----------------------------------------------------------------------
 !  subroutine mpas_pool_get_array_2d_int
@@ -4764,45 +4442,6 @@ module MPASAOS_pool_routines
       if (associated(field)) array => field % array
 
    end subroutine mpas_pool_get_array_2d_int!}}}
-
-   subroutine mpas_pool_get_array_2d_int_gpu(inPool, key, array, timeLevel)!{{{
-
-      implicit none
-
-      type (mpas_pool_type), intent(in) :: inPool
-      character (len=*), intent(in) :: key
-      integer, dimension(:,:), pointer :: array
-      integer, intent(in), optional :: timeLevel
-
-      type (field2DInteger), pointer :: field
-#ifdef MPAS_CAM_DYCORE
-
-      call mpas_pool_get_field_2d_int(inPool, key, field, timeLevel)
-
-      nullify(array)
-      if (associated(field)) then 
-              array => field % array
-                      !$acc enter data copyin(field%array)
-      end if
-#else
-
-      type (mpas_coupler_type), pointer :: coupler
-
-
-      call mpas_pool_get_field_2d_int(inPool, key, field, timeLevel)
-
-      nullify(array)
-      if (associated(field)) then 
-              coupler => field%block%domain%mpas_cpl
-              array => field % array
-#ifdef CORE_ATMOSPHERE
-              if (coupler % role_includes(ROLE_INTEGRATE)) then
-                      !$acc enter data copyin(field%array)
-              end if
-#endif
-      end if
-#endif
-   end subroutine mpas_pool_get_array_2d_int_gpu!}}}
 
 
 !-----------------------------------------------------------------------
@@ -4834,45 +4473,6 @@ module MPASAOS_pool_routines
 
    end subroutine mpas_pool_get_array_3d_int!}}}
 
-   subroutine mpas_pool_get_array_3d_int_gpu(inPool, key, array, timeLevel)!{{{
-
-      implicit none
-
-      type (mpas_pool_type), intent(in) :: inPool
-      character (len=*), intent(in) :: key
-      integer, dimension(:,:,:), pointer :: array
-      integer, intent(in), optional :: timeLevel
-
-      type (field3DInteger), pointer :: field
-#ifdef MPAS_CAM_DYCORE
-
-      call mpas_pool_get_field_3d_int(inPool, key, field, timeLevel)
-
-      nullify(array)
-      if (associated(field)) then 
-              array => field % array
-                      !$acc enter data copyin(field%array)
-      end if
-#else
-
-      type (mpas_coupler_type), pointer :: coupler
-
-
-      call mpas_pool_get_field_3d_int(inPool, key, field, timeLevel)
-
-      nullify(array)
-      if (associated(field)) then 
-              coupler => field%block%domain%mpas_cpl
-              array => field % array
-#ifdef CORE_ATMOSPHERE
-              if (coupler % role_includes(ROLE_INTEGRATE)) then
-                      !$acc enter data copyin(field%array)
-              end if
-#endif
-      end if
-#endif
-   end subroutine mpas_pool_get_array_3d_int_gpu!}}}
-
 
 !-----------------------------------------------------------------------
 !  subroutine mpas_pool_get_array_0d_char
@@ -4903,45 +4503,6 @@ module MPASAOS_pool_routines
 
    end subroutine mpas_pool_get_array_0d_char!}}}
 
-   subroutine mpas_pool_get_array_0d_char_gpu(inPool, key, string, timeLevel)!{{{
-
-      implicit none
-
-      type (mpas_pool_type), intent(in) :: inPool
-      character (len=*), intent(in) :: key
-      character (len=StrKIND), pointer :: string
-      integer, intent(in), optional :: timeLevel
-
-      type (field0DChar), pointer :: field
-#ifdef MPAS_CAM_DYCORE
-
-      call mpas_pool_get_field_0d_char(inPool, key, field, timeLevel)
-
-      nullify(string)
-      if (associated(field)) then 
-              string => field % scalar
-                      !$acc enter data copyin(field%scalar)
-      end if
-#else
-
-      type (mpas_coupler_type), pointer :: coupler
-
-
-      call mpas_pool_get_field_0d_char(inPool, key, field, timeLevel)
-
-      nullify(string)
-      if (associated(field)) then 
-              coupler => field%block%domain%mpas_cpl
-              string => field % scalar
-#ifdef CORE_ATMOSPHERE
-              if (coupler % role_includes(ROLE_INTEGRATE)) then
-                      !$acc enter data copyin(field%scalar)
-              end if
-#endif
-      end if
-#endif
-   end subroutine mpas_pool_get_array_0d_char_gpu!}}}
-
 
 !-----------------------------------------------------------------------
 !  subroutine mpas_pool_get_array_1d_char
@@ -4971,45 +4532,6 @@ module MPASAOS_pool_routines
       if (associated(field)) array => field % array
 
    end subroutine mpas_pool_get_array_1d_char!}}}
-
-   subroutine mpas_pool_get_array_1d_char_gpu(inPool, key, array, timeLevel)!{{{
-
-      implicit none
-
-      type (mpas_pool_type), intent(in) :: inPool
-      character (len=*), intent(in) :: key
-      character (len=StrKIND), dimension(:), pointer :: array
-      integer, intent(in), optional :: timeLevel
-
-      type (field1DChar), pointer :: field
-#ifdef MPAS_CAM_DYCORE
-
-      call mpas_pool_get_field_1d_char(inPool, key, field, timeLevel)
-
-      nullify(array)
-      if (associated(field)) then 
-              array => field % array
-                      !$acc enter data copyin(field%array)
-      end if
-#else
-
-      type (mpas_coupler_type), pointer :: coupler
-
-
-      call mpas_pool_get_field_1d_char(inPool, key, field, timeLevel)
-
-      nullify(array)
-      if (associated(field)) then 
-              coupler => field%block%domain%mpas_cpl
-              array => field % array
-#ifdef CORE_ATMOSPHERE
-              if (coupler % role_includes(ROLE_INTEGRATE)) then
-                      !$acc enter data copyin(field%array)
-              end if
-#endif
-      end if
-#endif
-   end subroutine mpas_pool_get_array_1d_char_gpu!}}}
 
 
 !-----------------------------------------------------------------------
@@ -5402,6 +4924,179 @@ module MPASAOS_pool_routines
 
 
 !-----------------------------------------------------------------------
+!  subroutine mpas_pool_get_config_real_scalar
+!
+!> \brief MPAS Pool Scalar Real Config Access Routine
+!> \author Bob Robey
+!> \creation date   11/16/2021
+!> \details
+!> This subroutine returns the scalar value associated with a config option with the
+!> name key in inPool. This subroutine is based on mpas_pool_get_config_real, but
+!> sets value to be a scalar real instead of a pointer to a real.
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_pool_get_config_real_scalar(inPool, key, value, record)!{{{
+
+      implicit none
+
+      type (mpas_pool_type), intent(in) :: inPool
+      character (len=*), intent(in) :: key
+      real (kind=RKIND) :: value
+      character (len=*), intent(in), optional :: record
+      type (mpas_pool_type), pointer :: recordPool
+
+      type (mpas_pool_data_type), pointer :: mem
+
+      if ( present(record) ) then
+         call mpas_pool_get_subpool(inPool, record, recordPool)
+         mem => pool_get_member(recordPool, key, MPAS_POOL_CONFIG)
+      else
+         mem => pool_get_member(inPool, key, MPAS_POOL_CONFIG)
+      end if
+
+      if (associated(mem)) then
+         if (mem % contentsType /= MPAS_POOL_REAL) then
+            call pool_mesg('Error: Config '//trim(key)//' is not type real.')
+         end if
+         value = mem % simple_real
+      else
+         call pool_mesg('Error: Config '//trim(key)//' not found in pool.')
+      end if
+
+   end subroutine mpas_pool_get_config_real_scalar!}}}
+
+
+!-----------------------------------------------------------------------
+!  subroutine mpas_pool_get_config_int_scalar
+!
+!> \brief MPAS Pool Scalar Integer Config Access Routine
+!> \author Bob Robey
+!> \date   11/16/2021
+!> \details
+!> This subroutine returns the scalar value associated with a config option with the
+!> name key in inPool. This subroutine is based on mpas_pool_get_config_int, but
+!> sets value to be a scalar integer instead of a pointer to a integer.
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_pool_get_config_int_scalar(inPool, key, value, record)!{{{
+
+      implicit none
+
+      type (mpas_pool_type), intent(in) :: inPool
+      character (len=*), intent(in) :: key
+      integer :: value
+      character (len=*), intent(in), optional :: record
+      type (mpas_pool_type), pointer :: recordPool
+
+      type (mpas_pool_data_type), pointer :: mem
+
+      if ( present(record) ) then
+         call mpas_pool_get_subpool(inPool, record, recordPool)
+         mem => pool_get_member(recordPool, key, MPAS_POOL_CONFIG)
+      else
+         mem => pool_get_member(inPool, key, MPAS_POOL_CONFIG)
+      end if
+
+      if (associated(mem)) then
+         if (mem % contentsType /= MPAS_POOL_INTEGER) then
+            call pool_mesg('Error: Config '//trim(key)//' is not type integer.')
+         end if
+         value = mem % simple_int
+      else
+         call pool_mesg('Error: Config '//trim(key)//' not found in pool.')
+      end if
+
+   end subroutine mpas_pool_get_config_int_scalar!}}}
+
+
+!-----------------------------------------------------------------------
+!  subroutine mpas_pool_get_config_char_scalar
+!
+!> \brief MPAS Pool Scalar Character Config Access Routine
+!> \author Bob Robey
+!> \date   11/16/2021
+!> \details
+!> This subroutine returns the scalar value associated with a config option with the
+!> name key in inPool. This subroutine is based on mpas_pool_get_config_char, but
+!> sets value to be a scalar character instead of a pointer to a character.
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_pool_get_config_char_scalar(inPool, key, value, record)!{{{
+
+      implicit none
+
+      type (mpas_pool_type), intent(in) :: inPool
+      character (len=*), intent(in) :: key
+      character (len=StrKIND) :: value
+      character (len=*), intent(in), optional :: record
+      type (mpas_pool_type), pointer :: recordPool
+
+      type (mpas_pool_data_type), pointer :: mem
+
+      if ( present(record) ) then
+         call mpas_pool_get_subpool(inPool, record, recordPool)
+         mem => pool_get_member(recordPool, key, MPAS_POOL_CONFIG)
+      else
+         mem => pool_get_member(inPool, key, MPAS_POOL_CONFIG)
+      end if
+
+      if (associated(mem)) then
+         if (mem % contentsType /= MPAS_POOL_CHARACTER) then
+            call pool_mesg('Error: Config '//trim(key)//' is not type character.')
+         end if
+
+         value = mem % simple_char
+      else
+         call pool_mesg('Error: Config '//trim(key)//' not found in pool.')
+      end if
+
+   end subroutine mpas_pool_get_config_char_scalar!}}}
+
+
+!-----------------------------------------------------------------------
+!  subroutine mpas_pool_get_config_logical_scalar
+!
+!> \brief MPAS Pool Scalar Logical Config Access Routine
+!> \author Bob Robey
+!> \date   11/16/2021
+!> \details
+!> This subroutine returns the scalar value associated with a config option with the
+!> name key in inPool. This subroutine is based on mpas_pool_get_config_logical, but
+!> sets value to be a scalar logical instead of a pointer to a logical.
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_pool_get_config_logical_scalar(inPool, key, value, record)!{{{
+
+      implicit none
+
+      type (mpas_pool_type), intent(in) :: inPool
+      character (len=*), intent(in) :: key
+      logical :: value
+      character (len=*), intent(in), optional :: record
+      type (mpas_pool_type), pointer :: recordPool
+
+      type (mpas_pool_data_type), pointer :: mem
+
+      if ( present(record) ) then
+         call mpas_pool_get_subpool(inPool, record, recordPool)
+         mem => pool_get_member(recordPool, key, MPAS_POOL_CONFIG)
+      else
+         mem => pool_get_member(inPool, key, MPAS_POOL_CONFIG)
+      end if
+
+      if (associated(mem)) then
+         if (mem % contentsType /= MPAS_POOL_LOGICAL) then
+            call pool_mesg('Error: Config '//trim(key)//' is not type logical.')
+         end if
+         value = mem % simple_logical
+      else
+         call pool_mesg('Error: Config '//trim(key)//' not found in pool.')
+      end if
+
+   end subroutine mpas_pool_get_config_logical_scalar!}}}
+
+
+!-----------------------------------------------------------------------
 !  routine mpas_pool_add_dimension_0d
 !
 !> \brief MPAS Pool 0D Dimension Insertion routine
@@ -5490,6 +5185,41 @@ module MPASAOS_pool_routines
       end if
 
    end subroutine mpas_pool_add_dimension_1d!}}}
+
+!-----------------------------------------------------------------------
+!  subroutine mpas_pool_get_dimension_scalar
+!
+!> \brief MPAS Pool Scalar Dimension Access subroutine
+!> \author Michael Duda, Doug Jacobsen
+!> \date   03/27/2014
+!> \details
+!> This subroutine returns the scalar value of the 0D dimension associated with key in
+!>  inPool.
+!
+!-----------------------------------------------------------------------
+   subroutine mpas_pool_get_dimension_scalar(inPool, key, dim)!{{{
+
+      implicit none
+
+      type (mpas_pool_type), intent(in) :: inPool
+      character (len=*), intent(in) :: key
+      integer :: dim
+
+      type (mpas_pool_data_type), pointer :: mem
+
+      mem => pool_get_member(inPool, key, MPAS_POOL_DIMENSION)
+
+      if (associated(mem)) then
+         if (mem % contentsDims /= 0) then
+            call pool_mesg('Error: Dimension '//trim(key)//' is not a scalar.')
+         else
+            dim = mem % simple_int
+         end if
+      else
+         call pool_mesg('Error: Dimension '//trim(key)//' not found in pool.')
+      end if
+
+   end subroutine mpas_pool_get_dimension_scalar!}}}
 
 
 !-----------------------------------------------------------------------

@@ -1,3 +1,4 @@
+   ! Derived type for storing list of blocks from a domain to be handled by a process
    type domain_type
       type (block_type), pointer :: blocklist
       type (mpas_pool_type), pointer :: configs, packages
@@ -36,26 +37,4 @@
 
       ! Domain_type is a linked list
       type (domain_type), pointer :: next => null()
-
-      ! Intra-component coupler
-      type (mpas_coupler_type), pointer :: mpas_cpl => null()
    end type domain_type
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -131,6 +131,11 @@ module MPASAOS_framework
          pio_stride      = -1    ! Not used when external io_system is provided
       end if
 
+      ! A value of 0 for pio_num_iotasks actually indicates that every task should be an I/O task
+      if (pio_num_iotasks == 0) then
+         pio_num_iotasks = domain % dminfo % nprocs
+      end if
+
       domain % ioContext % dminfo => domain % dminfo
 
       call MPAS_io_init(domain % ioContext, pio_num_iotasks, pio_stride, io_system)
@@ -156,7 +161,11 @@ module MPASAOS_framework
       type (domain_type), pointer :: domain
       type (iosystem_desc_t), optional, pointer :: io_system
 
-      call MPAS_io_finalize(domain % ioContext, .false.)
+      logical :: finalize_iosystem
+
+      ! if there's an external PIO system so we don't want to finalize it here
+      finalize_iosystem = .not. present(io_system)
+      call MPAS_io_finalize(domain % ioContext, finalize_iosystem=finalize_iosystem)
 
       call mpas_deallocate_domain(domain)
 
