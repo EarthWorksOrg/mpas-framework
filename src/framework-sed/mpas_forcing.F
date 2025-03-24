@@ -922,7 +922,7 @@ contains
        forcingGroupName, &
        streamManager, &
        restart, &
-       interpolateAtInit)
+       interpolateAtInit, whence )
 
     type(mpas_forcing_group_type), pointer :: &
          forcingGroupHead ! the forcing group linked list
@@ -939,11 +939,23 @@ contains
     logical, intent(in) :: &
          interpolateAtInit !< Input: interpolate to forcing variables at time 0.
 
+    integer, intent(in), optional :: &
+         whence !< Input: optionally read stream at other than mpas_stream_exact_time
+
     type(mpas_forcing_group_type), pointer :: &
          forcingGroup ! forcing group iterator
 
     type(mpas_forcing_stream_type), pointer :: &
          forcingStream ! forcing stream iterator
+
+    ! local variables
+    integer :: whenceloc
+
+    if(present(whence)) then
+       whenceloc = whence
+    else
+       whenceloc = mpas_stream_exact_time
+    endif
 
     ! loop over forcings linked list
     forcingGroup => forcingGroupHead
@@ -960,7 +972,8 @@ contains
                   forcingStream, &
                   streamManager, &
                   restart, &
-                  interpolateAtInit)
+                  interpolateAtInit, &
+                  whenceloc )
 
              forcingStream => forcingStream % next
           end do
@@ -990,7 +1003,8 @@ contains
        forcingStream, &
        streamManager, &
        restart, &
-       interpolateAtInit)
+       interpolateAtInit, &
+       whenceloc )
 
     type(mpas_forcing_group_type), pointer :: &
          forcingGroup ! the forcing group object
@@ -1006,6 +1020,9 @@ contains
 
     logical, intent(in) :: &
          interpolateAtInit !< Input: interpolate to forcing variables at time 0.
+
+    integer, intent(in), optional :: &
+         whenceloc !< Input: optionally read stream at other than mpas_stream_exact_time
 
     type(MPAS_Time_type) :: &
          forcingTimeCycle, & ! the forcing time after cycling
@@ -1111,14 +1128,25 @@ contains
        ! load the data into the slot
        call mpas_get_time(forcingTimeCycle, dateTimeString=forcingTimeStr)
        FORCING_DEBUG_WRITE('-- Forcing: get_initial_forcing_data: READ ATTEMPT: '//trim(forcingTimeStr))
-       call MPAS_stream_mgr_read(&
-            streamManager, &
-            forcingStream % forcingStreamID, &
-            timeLevel=iTime, &
-            when=forcingTimeStr, &
-            whence=MPAS_STREAM_EXACT_TIME, &
-            rightNow=.true., &
-            ierr=ierr)
+       if(present(whenceloc)) then
+          call MPAS_stream_mgr_read(&
+               streamManager, &
+               forcingStream % forcingStreamID, &
+               timeLevel=iTime, &
+               when=forcingTimeStr, &
+               whence=whenceloc, &
+               rightNow=.true., &
+               ierr=ierr)
+       else
+          call MPAS_stream_mgr_read(&
+               streamManager, &
+               forcingStream % forcingStreamID, &
+               timeLevel=iTime, &
+               when=forcingTimeStr, &
+               whence=MPAS_STREAM_EXACT_TIME, &
+               rightNow=.true., &
+               ierr=ierr)
+       endif
 
        if (ierr /= 0) then
           call mpas_log_write('Forcing: get_initial_forcing_data: READ: $i', MPAS_LOG_CRIT, intArgs=(/ierr/))
@@ -1288,6 +1316,8 @@ contains
     type(mpas_forcing_stream_type), pointer :: &
          forcingStream
 
+    integer :: ierr 
+
     ! check if cycling alarm is ringing
     if (mpas_is_alarm_ringing(forcingGroup % forcingClock, forcingGroup % forcingCycleAlarmID)) then
 
@@ -1295,8 +1325,9 @@ contains
 
        ! if ringing cycle the clock
        oldForingClockTime = mpas_get_clock_time(forcingGroup % forcingClock, MPAS_NOW)
+
        newForcingClockTime = oldForingClockTime - forcingGroup % forcingCycleDuration
-       call mpas_set_clock_time(forcingGroup % forcingClock, newForcingClockTime, MPAS_NOW)
+       call mpas_set_clock_time(forcingGroup % forcingClock, newForcingClockTime, MPAS_NOW, ierr=ierr)
 
        ! if ringing cycle the forcing times
        forcingStream => forcingGroup % stream
