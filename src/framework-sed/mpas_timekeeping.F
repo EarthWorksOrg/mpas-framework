@@ -105,32 +105,32 @@ module MPASAOS_timekeeping
 
 #else
 
-    #ifndef MPAS_NO_ESMF_INIT
-        #ifndef MPAS_EXTERNAL_ESMF_LIB
+#ifndef MPAS_NO_ESMF_INIT
+#ifndef MPAS_EXTERNAL_ESMF_LIB
             call ESMF_Initialize(defaultCalendar=ESMF_CALKIND_GREGORIAN)
-        #else
+#else
             call ESMF_Initialize(defaultCalKind=ESMF_CALKIND_GREGORIAN)
-        #endif
-    #endif
+#endif
+#endif
     else if (trim(calendar) == 'noleap') then
          TheCalendar = MPAS_GREGORIAN_NOLEAP
-    #ifndef MPAS_NO_ESMF_INIT
-        #ifndef MPAS_EXTERNAL_ESMF_LIB
+#ifndef MPAS_NO_ESMF_INIT
+#ifndef MPAS_EXTERNAL_ESMF_LIB
              call ESMF_Initialize(defaultCalendar=ESMF_CALKIND_NOLEAP)
-        #else
+#else
              call ESMF_Initialize(defaultCalKind=ESMF_CALKIND_NOLEAP)
-        #endif
-    #endif
+#endif
+#endif
       else if (trim(calendar) == '360day') then
         TheCalendar = MPAS_360DAY
-    #ifndef MPAS_NO_ESMF_INIT
-        #ifndef MPAS_EXTERNAL_ESMF_LIB
+#ifndef MPAS_NO_ESMF_INIT
+#ifndef MPAS_EXTERNAL_ESMF_LIB
         !    call ESMF_Initialize(defaultCalendar=ESMF_CALKIND_360DAY)
              call mpas_log_write('mpas_timekeeping_init: 360-day calendar not supported with the built-in ESMF timekeeping library', MPAS_LOG_ERR)
-        #else
+#else
              call ESMF_Initialize(defaultCalKind=ESMF_CALKIND_360DAY)
-        #endif
-    #endif
+#endif
+#endif
 
 #endif
 
@@ -148,9 +148,9 @@ module MPASAOS_timekeeping
       implicit none
 
 #ifndef DATMFORCEDRESTORING
-    #ifndef MPAS_NO_ESMF_INIT
+#ifndef MPAS_NO_ESMF_INIT
         call ESMF_Finalize()
-    #endif
+#endif
 #endif
 
    end subroutine mpas_timekeeping_finalize
@@ -187,9 +187,9 @@ module MPASAOS_timekeeping
 #ifdef DATMFORCEDRESTORING
         call ESMFloc_setYearWidth(yearWidthIn)
 #else
-    #ifndef MPAS_EXTERNAL_ESMF_LIB
+#ifndef MPAS_EXTERNAL_ESMF_LIB
         call ESMF_setYearWidth(yearWidthIn)
-    #endif
+#endif
 #endif
 
    end subroutine mpas_timekeeping_set_year_width!}}}
@@ -1459,11 +1459,11 @@ module MPASAOS_timekeeping
 #else
       call ESMF_TimeGet(curr_time % t, YY=YYYY, MM=MM, DD=DD, H=H, M=M, S=S, Sn=S_n, Sd=S_d, rc=ierr)
       call ESMF_TimeGet(curr_time % t, dayOfYear=DoY, rc=ierr)
-    #ifndef MPAS_EXTERNAL_ESMF_LIB
+#ifndef MPAS_EXTERNAL_ESMF_LIB
           call ESMF_TimeGet(curr_time % t, timeString=dateTimeString, rc=ierr)
-    #else
+#else
           call ESMF_TimeGet(curr_time % t, timeStringISOFrac=dateTimeString, rc=ierr)
-    #endif
+#endif
 #endif
 
       !
@@ -1802,17 +1802,17 @@ module MPASAOS_timekeeping
 #else
          call ESMF_TimeIntervalGet(interval % ti, StartTimeIn=StartTimeIn%t, D=days, S_i8=seconds, Sn=sn, Sd=sd, rc=ierr)
       else
-    #ifndef MPAS_EXTERNAL_ESMF_LIB
+#ifndef MPAS_EXTERNAL_ESMF_LIB
           if ( interval % ti % YR /= 0 .or. interval % ti % MM /= 0 ) then
              if (present(ierr)) ierr = 1
              call mpas_log_write('mpas_get_timeInterval cannnot return time interval information for an interval containing ' // &
                  'months and years without a startTimeIn argument.', MPAS_LOG_ERR)
              return
           end if
-    #endif
+#endif
           call ESMF_TimeIntervalGet(interval % ti, D=days, S_i8=seconds, Sn=sn, Sd=sd, rc=local_ierr)
           if (present(ierr)) ierr = local_ierr
-    #ifdef MPAS_EXTERNAL_ESMF_LIB
+#ifdef MPAS_EXTERNAL_ESMF_LIB
           !
           ! With an external ESMF library, treat the time interval type as opaque, and just
           ! assume that a non-success error code will be returned if the interval cannot be retrieved.
@@ -1822,7 +1822,7 @@ module MPASAOS_timekeeping
                  'months and years without a startTimeIn argument.', MPAS_LOG_ERR)
              return
           end if
-    #endif
+#endif
       endif
 #endif
 
@@ -1907,9 +1907,9 @@ module MPASAOS_timekeeping
 
 #else
 
-    #ifndef MPAS_EXTERNAL_ESMF_LIB
+#ifndef MPAS_EXTERNAL_ESMF_LIB
          call ESMF_TimeIntervalGet(interval % ti, timeString=timeString, rc=ierr)
-    #else
+#else
          !
          ! In case an external ESMF library is being used, the time interval may be returned in
          ! ISO period format, in which case it is easier to build a time interval string in MPAS
@@ -1931,7 +1931,7 @@ module MPASAOS_timekeeping
 
          write(timeString,'(a,i9.9,a,i2.2,a,i2.2,a,i2.2,f10.9)') trim(neg), abs(days), '_', abs(hours), ':', abs(minutes), ':', &
                                                                int(abs(seconds_real)), abs(seconds_real) - int(abs(seconds_real))
-    #endif
+#endif
 
       end if
 
@@ -2026,9 +2026,9 @@ module MPASAOS_timekeeping
 
 #else
 
-    #ifndef MPAS_EXTERNAL_ESMF_LIB
+#ifndef MPAS_EXTERNAL_ESMF_LIB
         mul_ti_n8 % ti = ti % ti * n8
-    #else
+#else
         !
         ! At present, the external ESMF library does not support multiplying a time interval
         ! by an 8-byte integer, so we convert to a 4-byte integer whenever possible.
@@ -2040,7 +2040,7 @@ module MPASAOS_timekeeping
                                messageType=MPAS_LOG_CRIT)
         end if
         mul_ti_n8 % ti = ti % ti * int(n8)
-    #endif
+#endif
 
 #endif
 
