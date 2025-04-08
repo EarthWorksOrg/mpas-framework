@@ -13,11 +13,7 @@ module MPASAOS_timekeeping
    use MPASAOS_threading
    use MPASAOS_log
 
-#ifdef DATMFORCEDRESTORING
    use ESMFloc
-#else
-   use ESMF
-#endif
 
    private :: mpas_calibrate_alarms
    private :: mpas_in_ringing_envelope
@@ -96,43 +92,11 @@ module MPASAOS_timekeeping
       if (trim(calendar) == 'gregorian') then
          TheCalendar = MPAS_GREGORIAN
 
-#ifdef DATMFORCEDRESTORING
 
          call ESMFloc_Initialize(defaultCalendar=ESMFloc_CALKIND_GREGORIAN)
       else if (trim(calendar) == 'noleap') then
          TheCalendar = MPAS_GREGORIAN_NOLEAP
          call ESMFloc_Initialize(defaultCalendar=ESMFloc_CALKIND_NOLEAP)
-
-#else
-
-#ifndef MPAS_NO_ESMF_INIT
-#ifndef MPAS_EXTERNAL_ESMF_LIB
-            call ESMF_Initialize(defaultCalendar=ESMF_CALKIND_GREGORIAN)
-#else
-            call ESMF_Initialize(defaultCalKind=ESMF_CALKIND_GREGORIAN)
-#endif
-#endif
-    else if (trim(calendar) == 'noleap') then
-         TheCalendar = MPAS_GREGORIAN_NOLEAP
-#ifndef MPAS_NO_ESMF_INIT
-#ifndef MPAS_EXTERNAL_ESMF_LIB
-             call ESMF_Initialize(defaultCalendar=ESMF_CALKIND_NOLEAP)
-#else
-             call ESMF_Initialize(defaultCalKind=ESMF_CALKIND_NOLEAP)
-#endif
-#endif
-      else if (trim(calendar) == '360day') then
-        TheCalendar = MPAS_360DAY
-#ifndef MPAS_NO_ESMF_INIT
-#ifndef MPAS_EXTERNAL_ESMF_LIB
-        !    call ESMF_Initialize(defaultCalendar=ESMF_CALKIND_360DAY)
-             call mpas_log_write('mpas_timekeeping_init: 360-day calendar not supported with the built-in ESMF timekeeping library', MPAS_LOG_ERR)
-#else
-             call ESMF_Initialize(defaultCalKind=ESMF_CALKIND_360DAY)
-#endif
-#endif
-
-#endif
 
       else
          call mpas_log_write('mpas_timekeeping_init: Invalid calendar type', MPAS_LOG_ERR)
@@ -146,12 +110,6 @@ module MPASAOS_timekeeping
    subroutine mpas_timekeeping_finalize()
 
       implicit none
-
-#ifndef DATMFORCEDRESTORING
-#ifndef MPAS_NO_ESMF_INIT
-        call ESMF_Finalize()
-#endif
-#endif
 
    end subroutine mpas_timekeeping_finalize
 
@@ -184,13 +142,7 @@ module MPASAOS_timekeeping
      ! though this may not be a problem, since the library appears to return time strings
      ! with as many digits as are needed to represent the year.
      !
-#ifdef DATMFORCEDRESTORING
         call ESMFloc_setYearWidth(yearWidthIn)
-#else
-#ifndef MPAS_EXTERNAL_ESMF_LIB
-        call ESMF_setYearWidth(yearWidthIn)
-#endif
-#endif
 
    end subroutine mpas_timekeeping_set_year_width!}}}
 
@@ -228,17 +180,10 @@ module MPASAOS_timekeeping
             return
          end if
 
-#ifdef DATMFORCEDRESTORING
          clock % c = ESMFloc_ClockCreate(TimeStep=timeStep%ti, StartTime=startTime%t, StopTime=stop_time%t, rc=ierr)
          if (present(ierr)) then
             if (ierr == ESMFloc_SUCCESS) ierr = 0
          end if
-#else
-         clock % c = ESMF_ClockCreate(TimeStep=timeStep%ti, StartTime=startTime%t, StopTime=stop_time%t, rc=ierr)
-         if (present(ierr)) then
-            if (ierr == ESMF_SUCCESS) ierr = 0
-         end if
-#endif
          clock % direction = MPAS_FORWARD
          clock % nAlarms = 0
          nullify(clock % alarmListHead)
@@ -269,17 +214,10 @@ module MPASAOS_timekeeping
             alarmPtr => clock % alarmListHead
          end do
 
-#ifdef DATMFORCEDRESTORING
          call ESMFloc_ClockDestroy(clock % c, rc=ierr)
          if (present(ierr)) then
             if (ierr == ESMFloc_SUCCESS) ierr = 0
          end if
-#else
-         call ESMF_ClockDestroy(clock % c, rc=ierr)
-         if (present(ierr)) then
-            if (ierr == ESMF_SUCCESS) ierr = 0
-         end if
-#endif
       end if
 
       !$omp barrier
@@ -294,7 +232,6 @@ module MPASAOS_timekeeping
       type (MPAS_Clock_type), intent(in) :: clock
       integer, intent(out), optional :: ierr
 
-#ifdef DATMFORCEDRESTORING
       type (ESMFloc_Time) :: currTime, startTime, stopTime
 
       call ESMFloc_ClockGet(clock % c, CurrTime=currTime, rc=ierr)
@@ -303,16 +240,6 @@ module MPASAOS_timekeeping
       if (present(ierr)) then
          if (ierr == ESMFloc_SUCCESS) ierr = 0
       end if
-#else
-      type (ESMF_Time) :: currTime, startTime, stopTime
-
-      call ESMF_ClockGet(clock % c, CurrTime=currTime, rc=ierr)
-      call ESMF_ClockGet(clock % c, StartTime=startTime, rc=ierr)
-      call ESMF_ClockGet(clock % c, StopTime=stopTime, rc=ierr)
-      if (present(ierr)) then
-         if (ierr == ESMF_SUCCESS) ierr = 0
-      end if
-#endif
 
       if (startTime <= stopTime) then
          mpas_is_clock_start_time = (currTime <= startTime)
@@ -330,7 +257,6 @@ module MPASAOS_timekeeping
       type (MPAS_Clock_type), intent(in) :: clock
       integer, intent(out), optional :: ierr
 
-#ifdef DATMFORCEDRESTORING
       type (ESMFloc_Time) :: currTime, startTime, stopTime
 
       call ESMFloc_ClockGet(clock % c, CurrTime=currTime, rc=ierr)
@@ -339,16 +265,6 @@ module MPASAOS_timekeeping
       if (present(ierr)) then
          if (ierr == ESMFloc_SUCCESS) ierr = 0
       end if
-#else
-      type (ESMF_Time) :: currTime, startTime, stopTime
-
-      call ESMF_ClockGet(clock % c, CurrTime=currTime, rc=ierr)
-      call ESMF_ClockGet(clock % c, StartTime=startTime, rc=ierr)
-      call ESMF_ClockGet(clock % c, StopTime=stopTime, rc=ierr)
-      if (present(ierr)) then
-         if (ierr == ESMF_SUCCESS) ierr = 0
-      end if
-#endif
 
       if (startTime <= stopTime) then
          mpas_is_clock_stop_time = (currTime >= stopTime)
@@ -377,25 +293,15 @@ module MPASAOS_timekeeping
 
       if ( threadNum == 0 ) then
          clock % direction = direction
-#ifdef DATMFORCEDRESTORING
          call ESMFloc_ClockGet(clock % c, TimeStep=timeStep%ti, rc=ierr)
          timeStep = neg_ti(timeStep)
          call ESMFloc_ClockSet(clock % c, TimeStep=timeStep%ti, rc=ierr)
-#else
-         call ESMF_ClockGet(clock % c, TimeStep=timeStep%ti, rc=ierr)
-         timeStep = neg_ti(timeStep)
-         call ESMF_ClockSet(clock % c, TimeStep=timeStep%ti, rc=ierr)
-#endif
 
          ! specify a valid previousRingTime for each alarm
          call mpas_calibrate_alarms(clock, ierr);
 
          if (present(ierr)) then
-#ifdef DATMFORCEDRESTORING
             if (ierr == ESMFloc_SUCCESS) ierr = 0
-#else
-            if (ierr == ESMF_SUCCESS) ierr = 0
-#endif
          end if
       end if
 
@@ -431,17 +337,10 @@ module MPASAOS_timekeeping
       threadNum = mpas_threading_get_thread_num()
 
       if ( threadNum == 0 ) then
-#ifdef DATMFORCEDRESTORING
          call ESMFloc_ClockSet(clock % c, TimeStep=timeStep%ti, rc=ierr)
          if (present(ierr)) then
             if (ierr == ESMFloc_SUCCESS) ierr = 0
          end if
-#else
-         call ESMF_ClockSet(clock % c, TimeStep=timeStep%ti, rc=ierr)
-         if (present(ierr)) then
-            if (ierr == ESMF_SUCCESS) ierr = 0
-         end if
-#endif
       end if
 
       !$omp barrier
@@ -458,15 +357,9 @@ module MPASAOS_timekeeping
 
       type (MPAS_TimeInterval_type) :: timeStep
 
-#ifdef DATMFORCEDRESTORING
       call ESMFloc_ClockGet(clock % c, TimeStep=timeStep%ti, rc=ierr)
       if (present(ierr)) then
          if (ierr == ESMFloc_SUCCESS) ierr = 0
-#else
-      call ESMF_ClockGet(clock % c, TimeStep=timeStep%ti, rc=ierr)
-      if (present(ierr)) then
-         if (ierr == ESMF_SUCCESS) ierr = 0
-#endif
       end if
 
       mpas_get_clock_timestep = timeStep
@@ -482,18 +375,13 @@ module MPASAOS_timekeeping
       type (MPAS_TimeInterval_type), intent(in), optional :: timeStep
       integer, intent(out), optional :: ierr
 
-#ifdef DATMFORCEDRESTORING
       type (ESMFloc_TimeInterval) :: time_step
-#else
-      type (ESMF_TimeInterval) :: time_step
-#endif
       integer :: threadNum
 
       threadNum = mpas_threading_get_thread_num()
 
       if ( threadNum == 0 ) then
          if (present(timeStep)) then
-#ifdef DATMFORCEDRESTORING
             call ESMFloc_ClockGet(clock % c, TimeStep=time_step, rc=ierr)
             call ESMFloc_ClockSet(clock % c, TimeStep=timeStep % ti, rc=ierr)
             call ESMFloc_ClockAdvance(clock % c, rc=ierr)
@@ -503,17 +391,6 @@ module MPASAOS_timekeeping
          end if
          if (present(ierr)) then
             if (ierr == ESMFloc_SUCCESS) ierr = 0
-#else
-            call ESMF_ClockGet(clock % c, TimeStep=time_step, rc=ierr)
-            call ESMF_ClockSet(clock % c, TimeStep=timeStep % ti, rc=ierr)
-            call ESMF_ClockAdvance(clock % c, rc=ierr)
-            call ESMF_ClockSet(clock % c, TimeStep=time_step, rc=ierr)
-         else
-            call ESMF_ClockAdvance(clock % c, rc=ierr)
-         end if
-         if (present(ierr)) then
-            if (ierr == ESMF_SUCCESS) ierr = 0
-#endif
          end if
       end if
 
@@ -536,7 +413,6 @@ module MPASAOS_timekeeping
 
       if ( threadNum == 0 ) then
          if (whichTime == MPAS_NOW) then
-#ifdef DATMFORCEDRESTORING
             call ESMFloc_ClockSet(clock % c, CurrTime=clock_time%t, rc=ierr)
             call mpas_calibrate_alarms(clock, ierr);
          else if (whichTime == MPAS_START_TIME) then
@@ -548,19 +424,6 @@ module MPASAOS_timekeeping
          end if
          if (present(ierr)) then
             if (ierr == ESMFloc_SUCCESS) ierr = 0
-#else
-            call ESMF_ClockSet(clock % c, CurrTime=clock_time%t, rc=ierr)
-            call mpas_calibrate_alarms(clock, ierr);
-         else if (whichTime == MPAS_START_TIME) then
-            call ESMF_ClockSet(clock % c, StartTime=clock_time%t, rc=ierr)
-         else if (whichTime == MPAS_STOP_TIME) then
-            call ESMF_ClockSet(clock % c, StopTime=clock_time%t, rc=ierr)
-         else if (present(ierr)) then
-            ierr = 1
-         end if
-         if (present(ierr)) then
-            if (ierr == ESMF_SUCCESS) ierr = 0
-#endif
          end if
       end if
 
@@ -580,7 +443,6 @@ module MPASAOS_timekeeping
       type (MPAS_Time_type) :: clock_time
 
       if (whichTime == MPAS_NOW) then
-#ifdef DATMFORCEDRESTORING
          call ESMFloc_ClockGet(clock % c, CurrTime=clock_time%t, rc=ierr)
       else if (whichTime == MPAS_START_TIME) then
          call ESMFloc_ClockGet(clock % c, StartTime=clock_time%t, rc=ierr)
@@ -591,18 +453,6 @@ module MPASAOS_timekeeping
       end if
       if (present(ierr)) then
          if (ierr == ESMFloc_SUCCESS) ierr = 0
-#else
-         call ESMF_ClockGet(clock % c, CurrTime=clock_time%t, rc=ierr)
-      else if (whichTime == MPAS_START_TIME) then
-         call ESMF_ClockGet(clock % c, StartTime=clock_time%t, rc=ierr)
-      else if (whichTime == MPAS_STOP_TIME) then
-         call ESMF_ClockGet(clock % c, StopTime=clock_time%t, rc=ierr)
-      else if (present(ierr)) then
-         ierr = 1
-      end if
-      if (present(ierr)) then
-         if (ierr == ESMF_SUCCESS) ierr = 0
-#endif
       end if
 
       mpas_get_clock_time = clock_time
@@ -680,11 +530,7 @@ module MPASAOS_timekeeping
             alarmPtr % prevRingTime = alarmTime
          end if
          if (present(ierr)) then
-#ifdef DATMFORCEDRESTORING
             if (ierr == ESMFloc_SUCCESS) ierr = 0
-#else
-            if (ierr == ESMF_SUCCESS) ierr = 0
-#endif
          endif
       end if
 
@@ -1250,11 +1096,7 @@ module MPASAOS_timekeeping
          end do
    
          if (present(ierr)) then
-#ifdef DATMFORCEDRESTORING
             if (ierr == ESMFloc_SUCCESS) ierr = 0
-#else
-            if (ierr == ESMF_SUCCESS) ierr = 0
-#endif
          end if
       end if
 
@@ -1367,11 +1209,7 @@ module MPASAOS_timekeeping
             return
          end if
 
-#ifdef DATMFORCEDRESTORING
          call ESMFloc_TimeSet(curr_time % t, YY=year, MM=month, DD=day, H=hour, M=min, S=sec, Sn=numerator, Sd=denominator, rc=ierr)
-#else
-         call ESMF_TimeSet(curr_time % t, YY=year, MM=month, DD=day, H=hour, M=min, S=sec, Sn=numerator, Sd=denominator, rc=ierr)
-#endif
 
       else
       
@@ -1414,20 +1252,12 @@ module MPASAOS_timekeeping
             return
          end if
 
-#ifdef DATMFORCEDRESTORING
          call ESMFloc_TimeSet(curr_time % t, YY=YYYY, MM=month, DD=day, H=H, M=M, S=S, Sn=S_n, Sd=S_d, rc=ierr)
-#else
-         call ESMF_TimeSet(curr_time % t, YY=YYYY, MM=month, DD=day, H=H, M=M, S=S, Sn=S_n, Sd=S_d, rc=ierr)
-#endif
       
       end if
       
       if (present(ierr)) then
-#ifdef DATMFORCEDRESTORING
          if (ierr == ESMFloc_SUCCESS) ierr = 0
-#else
-         if (ierr == ESMF_SUCCESS) ierr = 0
-#endif
       end if
 
    end subroutine mpas_set_time
@@ -1452,19 +1282,9 @@ module MPASAOS_timekeeping
 
       integer :: idx
 
-#ifdef DATMFORCEDRESTORING
       call ESMFloc_TimeGet(curr_time % t, YY=YYYY, MM=MM, DD=DD, H=H, M=M, S=S, Sn=S_n, Sd=S_d, rc=ierr)
       call ESMFloc_TimeGet(curr_time % t, dayOfYear=DoY, rc=ierr)
       call ESMFloc_TimeGet(curr_time % t, timeString=dateTimeString, rc=ierr)
-#else
-      call ESMF_TimeGet(curr_time % t, YY=YYYY, MM=MM, DD=DD, H=H, M=M, S=S, Sn=S_n, Sd=S_d, rc=ierr)
-      call ESMF_TimeGet(curr_time % t, dayOfYear=DoY, rc=ierr)
-#ifndef MPAS_EXTERNAL_ESMF_LIB
-          call ESMF_TimeGet(curr_time % t, timeString=dateTimeString, rc=ierr)
-#else
-          call ESMF_TimeGet(curr_time % t, timeStringISOFrac=dateTimeString, rc=ierr)
-#endif
-#endif
 
       !
       ! In case an external ESMF library that returns ISO timestamps is being used,
@@ -1479,11 +1299,7 @@ module MPASAOS_timekeeping
       end if
 
       if (present(ierr)) then
-#ifdef DATMFORCEDRESTORING
          if (ierr == ESMFloc_SUCCESS) ierr = 0
-#else
-         if (ierr == ESMF_SUCCESS) ierr = 0
-#endif
       end if
 
    end subroutine mpas_get_time
@@ -1713,19 +1529,11 @@ module MPASAOS_timekeeping
             return
          end if
 
-#ifdef DATMFORCEDRESTORING
          call ESMFloc_TimeIntervalSet(interval % ti, YY=year, MM=month, D=day, H=hour, M=min, S_i8=sec, Sn=numerator, Sd=denominator, rc=ierr)
-#else
-         call ESMF_TimeIntervalSet(interval % ti, YY=year, MM=month, D=day, H=hour, M=min, S_i8=sec, Sn=numerator, Sd=denominator, rc=ierr)
-#endif
 
       else
 
-#ifdef DATMFORCEDRESTORING
          call ESMFloc_TimeIntervalSet(interval % ti, YY=YY, MM=MM, D=DD, H=H, M=M, S_i8=S_i8, S=S, Sn=S_n, Sd=S_d, rc=ierr)
-#else
-         call ESMF_TimeIntervalSet(interval % ti, YY=YY, MM=MM, D=DD, H=H, M=M, S_i8=S_i8, S=S, Sn=S_n, Sd=S_d, rc=ierr)
-#endif
       
       end if
 
@@ -1773,7 +1581,6 @@ module MPASAOS_timekeeping
 
 
       if (present(StartTimeIn)) then
-#ifdef DATMFORCEDRESTORING
          call ESMFloc_TimeIntervalGet(interval % ti, StartTimeIn=StartTimeIn%t, D=days, S_i8=seconds, Sn=sn, Sd=sd, rc=ierr)
       else
     !#ifndef MPAS_EXTERNAL_ESMF_LIB
@@ -1798,33 +1605,6 @@ module MPASAOS_timekeeping
     !          end if
     !#endif
       endif
-
-#else
-         call ESMF_TimeIntervalGet(interval % ti, StartTimeIn=StartTimeIn%t, D=days, S_i8=seconds, Sn=sn, Sd=sd, rc=ierr)
-      else
-#ifndef MPAS_EXTERNAL_ESMF_LIB
-          if ( interval % ti % YR /= 0 .or. interval % ti % MM /= 0 ) then
-             if (present(ierr)) ierr = 1
-             call mpas_log_write('mpas_get_timeInterval cannnot return time interval information for an interval containing ' // &
-                 'months and years without a startTimeIn argument.', MPAS_LOG_ERR)
-             return
-          end if
-#endif
-          call ESMF_TimeIntervalGet(interval % ti, D=days, S_i8=seconds, Sn=sn, Sd=sd, rc=local_ierr)
-          if (present(ierr)) ierr = local_ierr
-#ifdef MPAS_EXTERNAL_ESMF_LIB
-          !
-          ! With an external ESMF library, treat the time interval type as opaque, and just
-          ! assume that a non-success error code will be returned if the interval cannot be retrieved.
-          !
-          if (local_ierr /= ESMF_SUCCESS) then
-             call mpas_log_write('mpas_get_timeInterval cannnot return time interval information for an interval containing ' // &
-                 'months and years without a startTimeIn argument.', MPAS_LOG_ERR)
-             return
-          end if
-#endif
-      endif
-#endif
 
       if (sd == 0) then   ! may only occur if (sn == 0)?
          sd = 1
@@ -1871,7 +1651,6 @@ module MPASAOS_timekeeping
       end if
 
       if (present(timeString)) then
-#ifdef DATMFORCEDRESTORING
 
     !#ifndef MPAS_EXTERNAL_ESMF_LIB
          call ESMFloc_TimeIntervalGet(interval % ti, timeString=timeString, rc=ierr)
@@ -1904,42 +1683,6 @@ module MPASAOS_timekeeping
       if (present(ierr)) then
          if (ierr == ESMFloc_SUCCESS) ierr = 0
       end if
-
-#else
-
-#ifndef MPAS_EXTERNAL_ESMF_LIB
-         call ESMF_TimeIntervalGet(interval % ti, timeString=timeString, rc=ierr)
-#else
-         !
-         ! In case an external ESMF library is being used, the time interval may be returned in
-         ! ISO period format, in which case it is easier to build a time interval string in MPAS
-         ! format given days, hours, minutes, and seconds.
-         !
-         call ESMF_TimeIntervalGet(interval % ti, StartTimeIn=StartTimeIn%t, &
-                                   d=days, h=hours, m=minutes, s_i8=seconds, sN=sn, sD=sd, rc=ierr)
-         seconds_real = real(seconds,kind=R8KIND) + (real(sn, kind=R8KIND) / real(sd, kind=R8KIND))
-
-         !
-         ! If the time interval is negative, the ESMF library will return negative values for
-         ! non-zero components of the interval, so days, hours, minutes, and seconds_real must
-         ! be checked in order to determine whether a '-' needs to be prepended to the timeString
-         !
-         neg = ''
-         if (days < 0 .or. hours < 0 .or. minutes < 0 .or. seconds_real < 0.0_R8KIND) then
-            neg = '-'
-         end if
-
-         write(timeString,'(a,i9.9,a,i2.2,a,i2.2,a,i2.2,f10.9)') trim(neg), abs(days), '_', abs(hours), ':', abs(minutes), ':', &
-                                                               int(abs(seconds_real)), abs(seconds_real) - int(abs(seconds_real))
-#endif
-
-      end if
-
-      if (present(ierr)) then
-         if (ierr == ESMF_SUCCESS) ierr = 0
-      end if
-
-#endif
 
    end subroutine mpas_get_timeInterval
 
@@ -2020,29 +1763,8 @@ module MPASAOS_timekeeping
       type (MPAS_TimeInterval_type), intent(in) :: ti
       integer (kind=I8KIND), intent(in) :: n8
 
-#ifdef DATMFORCEDRESTORING
 
         mul_ti_n8 % ti = ti % ti * n8
-
-#else
-
-#ifndef MPAS_EXTERNAL_ESMF_LIB
-        mul_ti_n8 % ti = ti % ti * n8
-#else
-        !
-        ! At present, the external ESMF library does not support multiplying a time interval
-        ! by an 8-byte integer, so we convert to a 4-byte integer whenever possible.
-        ! However, if the value of the 8-byte integer exceeds what can be represented by
-        ! a 4-byte integer, stop with a critical error.
-        !
-        if (n8 > huge(int(n8)) .or. n8 < -huge(int(n8))) then
-           call mpas_log_write('(time interval) * 64-bit integer: integer out of range for external ESMF library', &
-                               messageType=MPAS_LOG_CRIT)
-        end if
-        mul_ti_n8 % ti = ti % ti * int(n8)
-#endif
-
-#endif
 
    end function mul_ti_n8
 
@@ -2301,19 +2023,11 @@ module MPASAOS_timekeeping
       integer :: rc
       integer :: D, S, Sn, Sd
 
-#ifdef DATMFORCEDRESTORING
       call ESMFloc_TimeIntervalGet(ti % ti, D=D, S=S, Sn=Sn, Sd=Sd, rc=rc)
       D    = -D 
       S    = -S 
       Sn   = -Sn
       call ESMFloc_TimeIntervalSet(neg_ti % ti, D=D, S=S, Sn=Sn, Sd=Sd, rc=rc)
-#else
-      call ESMF_TimeIntervalGet(ti % ti, D=D, S=S, Sn=Sn, Sd=Sd, rc=rc)
-      D    = -D 
-      S    = -S 
-      Sn   = -Sn
-      call ESMF_TimeIntervalSet(neg_ti % ti, D=D, S=S, Sn=Sn, Sd=Sd, rc=rc)
-#endif
 
    end function neg_ti
 
@@ -2328,7 +2042,6 @@ module MPASAOS_timekeeping
       integer :: rc
       integer :: D, S, Sn, Sd
 
-#ifdef DATMFORCEDRESTORING
       call ESMFloc_TimeIntervalSet(zeroInterval % ti, D=0, H=0, M=0, S=0, rc=rc)
 
       if(ti < zeroInterval) then
@@ -2340,19 +2053,6 @@ module MPASAOS_timekeeping
       else
          abs_ti = ti
       end if
-#else
-      call ESMF_TimeIntervalSet(zeroInterval % ti, D=0, H=0, M=0, S=0, rc=rc)
-
-      if(ti < zeroInterval) then
-         call ESMF_TimeIntervalGet(ti % ti, D=D, S=S, Sn=Sn, Sd=Sd, rc=rc)
-         D    = -D 
-         S    = -S 
-         Sn   = -Sn
-         call ESMF_TimeIntervalSet(abs_ti % ti, D=D, S=S, Sn=Sn, Sd=Sd, rc=rc)
-      else
-         abs_ti = ti
-      end if
-#endif
 
    end function abs_ti
 
