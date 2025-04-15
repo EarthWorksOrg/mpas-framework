@@ -3836,8 +3836,9 @@ module MPASAOS_stream_manager
            else if (stream % nRecords /= 0) then
                STREAM_DEBUG_WRITE('   Seeked record is: $i out of $i with a time stamp of ' // trim(temp_actualWhen) // ' filename was ' // trim(stream % filename) COMMA intArgs=(/stream%nRecords COMMA temp_maxRecords/))
            else if (temp_maxRecords /= 0 .and. whence == MPAS_STREAM_EXACT_TIME) then
-               STREAM_ERROR_WRITE('File ' // trim(stream % filename) // ' does not contain the time ' // trim(when))
-               ierr = MPAS_STREAM_MGR_ERROR
+               !STREAM_ERROR_WRITE('File ' // trim(stream % filename) // ' does not contain the time ' // trim(when))
+               !ierr = MPAS_STREAM_MGR_ERROR
+               STREAM_WARNING_WRITE('File ' // trim(stream % filename) // ' does not contain the time ' // trim(when))
                return
            end if
 
