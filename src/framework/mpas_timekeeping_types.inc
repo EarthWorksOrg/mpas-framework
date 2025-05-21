@@ -12,11 +12,11 @@
                          MPAS_360DAY = 2
 
    type MPAS_Time_type
-      type (ESMF_Time) :: t
+      type (ESMFloc_Time) :: t
    end type
 
    type MPAS_TimeInterval_type
-      type (ESMF_TimeInterval) :: ti
+      type (ESMFloc_TimeInterval) :: ti
    end type
 
    type MPAS_Alarm_type
@@ -32,7 +32,7 @@
    type MPAS_Clock_type
       integer :: direction
       integer :: nAlarms
-      type (ESMF_Clock) :: c
+      type (ESMFloc_Clock) :: c
       type (MPAS_Alarm_type), pointer :: alarmListHead => null()
    end type
 

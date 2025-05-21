@@ -30,7 +30,7 @@ module MPASAOS_derived_types
    use pio
    use pio_types
 
-   use ESMF
+   use ESMFloc
 
 #include "mpas_attlist_types.inc"
 

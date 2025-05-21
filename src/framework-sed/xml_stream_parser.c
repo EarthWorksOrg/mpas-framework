@@ -49,7 +49,7 @@ struct stacknode {
 	struct stacknode *next;
 };
 
-struct stacknode *head = NULL;
+struct stacknode *MPASAOS_head = NULL;
 
 
 /*
@@ -65,7 +65,7 @@ static char *global_file;
  *  Prints an error message in a standard format.
  *
  *********************************************************************************/
-void fmt_err(const char *mesg)
+void MPASAOS_fmt_err(const char *mesg)
 {
 	char msgbuf[MSGSIZE];
 
@@ -81,7 +81,7 @@ void fmt_err(const char *mesg)
  *  Prints a warning message in a standard format.
  *
  *********************************************************************************/
-void fmt_warn(const char *mesg)
+void MPASAOS_fmt_warn(const char *mesg)
 {
 	char msgbuf[MSGSIZE];
 
@@ -96,7 +96,7 @@ void fmt_warn(const char *mesg)
  *  Prints an informational message in a standard format.
  *
  *********************************************************************************/
-void fmt_info(const char *mesg)
+void MPASAOS_fmt_info(const char *mesg)
 {
 	char msgbuf[MSGSIZE];
 
@@ -112,11 +112,11 @@ void fmt_info(const char *mesg)
  *  Pushes a new node onto the stack.
  *
  *********************************************************************************/
-void push_tag(struct stacknode *node)
+void MPASAOS_push_tag(struct stacknode *node)
 {
 	if (node != NULL) {
-		node->next = head;
-		head = node;
+		node->next = MPASAOS_head;
+		MPASAOS_head = node;
 	}
 }
 
@@ -128,13 +128,13 @@ void push_tag(struct stacknode *node)
  *  Pops a new node from the stack.
  *
  *********************************************************************************/
-struct stacknode * pop_tag(void)
+struct stacknode * MPASAOS_pop_tag(void)
 {
 	struct stacknode *retval;
 
-	retval = head;
-	if (head != NULL) {
-		head = head->next;
+	retval = MPASAOS_head;
+	if (MPASAOS_head != NULL) {
+		MPASAOS_head = MPASAOS_head->next;
 	}
 
 	return retval;
@@ -153,7 +153,7 @@ struct stacknode * pop_tag(void)
  *  is the string "stream".
  *
  *********************************************************************************/
-void parse_xml_tag_name(char *tag_buf, char *tag_name)
+void MPASAOS_parse_xml_tag_name(char *tag_buf, char *tag_name)
 {
 	size_t i;
 
@@ -191,7 +191,7 @@ void parse_xml_tag_name(char *tag_buf, char *tag_name)
  *  realtive to the starting position.
  *
  *********************************************************************************/
-size_t parse_xml_tag(char *xml_buf, size_t buf_len, char *tag, size_t *tag_len, int *line, int *start_line)
+size_t MPASAOS_parse_xml_tag(char *xml_buf, size_t buf_len, char *tag, size_t *tag_len, int *line, int *start_line)
 {
 	size_t i, j;
 	int found_end, block_comment;
@@ -284,7 +284,7 @@ size_t parse_xml_tag(char *xml_buf, size_t buf_len, char *tag, size_t *tag_len, 
  *  all MPI tasks that belong to the communicator.
  *
  *********************************************************************************/
-int par_read(char *fname, int *mpi_comm, char **xml_buf, size_t *bufsize)
+int MPASAOS_par_read(char *fname, int *mpi_comm, char **xml_buf, size_t *bufsize)
 {
 	int iofd;
 	int rank;
@@ -345,7 +345,7 @@ int par_read(char *fname, int *mpi_comm, char **xml_buf, size_t *bufsize)
  *  are consistent.
  *
  *********************************************************************************/
-int attribute_check(ezxml_t stream)
+int MPASAOS_attribute_check(ezxml_t stream)
 {
 	const char *s_name, *s_type, *s_filename, *s_filename_intv, *s_input, *s_output, *s_ref_time;
 	char msgbuf[MSGSIZE];
@@ -364,17 +364,17 @@ int attribute_check(ezxml_t stream)
 	 *  Check for required attributes
 	 */
 	if (s_name == NULL) {
-		fmt_err("stream must have the \"name\" attribute.");
+		MPASAOS_fmt_err("stream must have the \"name\" attribute.");
 		return 1;
 	}
 	else if (s_type == NULL) {
 		snprintf(msgbuf, MSGSIZE, "stream \"%s\" must have the \"type\" attribute.", s_name);
-		fmt_err(msgbuf);
+		MPASAOS_fmt_err(msgbuf);
 		return 1;
 	}
 	else if (s_filename == NULL) {
 		snprintf(msgbuf, MSGSIZE, "stream \"%s\" must have the \"filename_template\" attribute.", s_name);
-		fmt_err(msgbuf);
+		MPASAOS_fmt_err(msgbuf);
 		return 1;
 	}
 
@@ -384,21 +384,21 @@ int attribute_check(ezxml_t stream)
 	 */
 	if (strstr(s_type, "input") != NULL && s_input == NULL) {
 		snprintf(msgbuf, MSGSIZE, "stream \"%s\" is an input stream and must have the \"input_interval\" attribute.", s_name);
-		fmt_err(msgbuf);
+		MPASAOS_fmt_err(msgbuf);
 		return 1;
 	}
 	if (strstr(s_type, "output") != NULL && s_output == NULL) {
 		snprintf(msgbuf, MSGSIZE, "stream \"%s\" is an output stream and must have the \"output_interval\" attribute.", s_name);
-		fmt_err(msgbuf);
+		MPASAOS_fmt_err(msgbuf);
 		return 1;
 	}
 	if (strstr(s_type, "input") != NULL && strstr(s_type, "output") == NULL && s_output != NULL) {
 		snprintf(msgbuf, MSGSIZE, "input-only stream \"%s\" has the \"output_interval\" attribute.", s_name);
-		fmt_warn(msgbuf);
+		MPASAOS_fmt_warn(msgbuf);
 	}
 	if (strstr(s_type, "output") != NULL && strstr(s_type, "input") == NULL && s_input != NULL) {
 		snprintf(msgbuf, MSGSIZE, "output-only stream \"%s\" has the \"input_interval\" attribute.", s_name);
-		fmt_warn(msgbuf);
+		MPASAOS_fmt_warn(msgbuf);
 	}
 
 	/*
@@ -407,32 +407,32 @@ int attribute_check(ezxml_t stream)
 	if ( s_filename_intv != NULL ) {
 		if ( strstr(s_filename_intv, "input_interval") != NULL && s_input == NULL) {
 			snprintf(msgbuf, MSGSIZE, "stream \"%s\" has a value of \"input_interval\" for the \"filename_interval\" attribute, without defining the \"input_interval\" attribute.", s_name);
-			fmt_err(msgbuf);
+			MPASAOS_fmt_err(msgbuf);
 			return 1;
 		}
 		if ( strstr(s_filename_intv, "output_interval") != NULL && s_output == NULL) {
 			snprintf(msgbuf, MSGSIZE, "stream \"%s\" has a value of \"output_interval\" for the \"filename_interval\" attribute, without defining the \"output_interval\" attribute.", s_name);
-			fmt_err(msgbuf);
+			MPASAOS_fmt_err(msgbuf);
 			return 1;
 		}
 		if ( strstr(s_filename_intv, "input_interval") != NULL && strstr(s_input, "initial_only") != NULL) {
 			snprintf(msgbuf, MSGSIZE, "stream \"%s\" cannot have a value of \"input_interval\" for the \"filename_interval\" attribute, when \"input_interval\" is set to \"initial_only\".", s_name);
-			fmt_err(msgbuf);
+			MPASAOS_fmt_err(msgbuf);
 			return 1;
 		}
 		if ( strstr(s_filename_intv, "output_interval") != NULL && strstr(s_output, "initial_only") != NULL) {
 			snprintf(msgbuf, MSGSIZE, "stream \"%s\" cannot have a value of \"output_interval\" for the \"filename_interval\" attribute, when \"output_interval\" is set to \"initial_only\".", s_name);
-			fmt_err(msgbuf);
+			MPASAOS_fmt_err(msgbuf);
 			return 1;
 		}
 		if ( strstr(s_filename_intv, "input_interval") != NULL && strstr(s_input, "final_only") != NULL) {
 			snprintf(msgbuf, MSGSIZE, "stream \"%s\" cannot have a value of \"input_interval\" for the \"filename_interval\" attribute, when \"input_interval\" is set to \"final_only\".", s_name);
-			fmt_err(msgbuf);
+			MPASAOS_fmt_err(msgbuf);
 			return 1;
 		}
 		if ( strstr(s_filename_intv, "output_interval") != NULL && strstr(s_output, "final_only") != NULL) {
 			snprintf(msgbuf, MSGSIZE, "stream \"%s\" cannot have a value of \"output_interval\" for the \"filename_interval\" attribute, when \"output_interval\" is set to \"final_only\".", s_name);
-			fmt_err(msgbuf);
+			MPASAOS_fmt_err(msgbuf);
 			return 1;
 		}
 	}
@@ -449,7 +449,7 @@ int attribute_check(ezxml_t stream)
 		if (s_filename[i] == '$') {
 			if (strchr("YMDdhmsGSB",nextchar) == NULL) {
 				snprintf(msgbuf, MSGSIZE, "filename_template for stream \"%s\" contains unrecognized variable \"$%c\".", s_name, nextchar);
-				fmt_err(msgbuf);
+				MPASAOS_fmt_err(msgbuf);
 				return 1;
 			}
 		}	
@@ -466,7 +466,7 @@ int attribute_check(ezxml_t stream)
  *  Checks that two streams have unique name and filename_template attributes
  *
  *********************************************************************************/
-int uniqueness_check(ezxml_t stream1, ezxml_t stream2)
+int MPASAOS_uniqueness_check(ezxml_t stream1, ezxml_t stream2)
 {
 	const char *name, *name2;
 	const char *filename, *filename2;
@@ -483,13 +483,13 @@ int uniqueness_check(ezxml_t stream1, ezxml_t stream2)
 
 		if (strcmp(name, name2) == 0) {
 			snprintf(msgbuf, MSGSIZE, "stream \"%s\" is define more than once.", name);
-			fmt_err(msgbuf);
+			MPASAOS_fmt_err(msgbuf);
 			return 1;
 		}
 		if (strstr(type, "output") != NULL || strstr(type2, "output") != NULL){
 			if (strcmp(filename, filename2) == 0) {
 				snprintf(msgbuf, MSGSIZE, "Output streams \"%s\" and \"%s\" cannot share the filename_template \"%s\".", name, name2, filename);
-				fmt_err(msgbuf);
+				MPASAOS_fmt_err(msgbuf);
 				return 1;
 			}
 		}
@@ -506,7 +506,7 @@ int uniqueness_check(ezxml_t stream1, ezxml_t stream2)
  *  Validates the specification of run-time streams.
  *
  *********************************************************************************/
-int check_streams(ezxml_t streams)
+int MPASAOS_check_streams(ezxml_t streams)
 {
 	ezxml_t stream_xml;
 	ezxml_t stream2_xml;
@@ -519,7 +519,7 @@ int check_streams(ezxml_t streams)
 
 	/* Check immutable streams */
 	for (stream_xml = ezxml_child(streams, "immutable_stream"); stream_xml; stream_xml = ezxml_next(stream_xml)) {
-		if (attribute_check(stream_xml) != 0) {
+		if (MPASAOS_attribute_check(stream_xml) != 0) {
 			return 1;
 		}	
 
@@ -529,7 +529,7 @@ int check_streams(ezxml_t streams)
 		if (test_xml != NULL || test2_xml != NULL) {
 			name = ezxml_attr(stream_xml, "name");
 			snprintf(msgbuf, MSGSIZE, "the set of variables in stream \"%s\" cannot be modified.", name);
-			fmt_err(msgbuf);
+			MPASAOS_fmt_err(msgbuf);
 			return 1;
 		}
 	}
@@ -538,7 +538,7 @@ int check_streams(ezxml_t streams)
 	for (stream_xml = ezxml_child(streams, "stream"); stream_xml; stream_xml = ezxml_next(stream_xml)) {
 		name = ezxml_attr(stream_xml, "name");
 
-		if (attribute_check(stream_xml) != 0) {
+		if (MPASAOS_attribute_check(stream_xml) != 0) {
 			return 1;
 		}	
 
@@ -548,7 +548,7 @@ int check_streams(ezxml_t streams)
 /* TODO: should this also be done only on the master task? */
 			if (access(filename, F_OK|R_OK) == -1) {
 				snprintf(msgbuf, MSGSIZE, "definition of stream \"%s\" references file %s that cannot be opened for reading.", name, filename);
-				fmt_err(msgbuf);
+				MPASAOS_fmt_err(msgbuf);
 				return 1;
 			}
 		}
@@ -558,18 +558,18 @@ int check_streams(ezxml_t streams)
 	/* Check that the name and filename_template attributes of all streams are unique */
 	for (stream_xml = ezxml_child(streams, "stream"); stream_xml; stream_xml = ezxml_next(stream_xml)) {
 		for (stream2_xml = ezxml_child(streams, "stream"); stream2_xml; stream2_xml = ezxml_next(stream2_xml)) {
-			if (uniqueness_check(stream_xml, stream2_xml)) return 1;
+			if (MPASAOS_uniqueness_check(stream_xml, stream2_xml)) return 1;
 		}
 		for (stream2_xml = ezxml_child(streams, "immutable_stream"); stream2_xml; stream2_xml = ezxml_next(stream2_xml)) {
-			if (uniqueness_check(stream_xml, stream2_xml)) return 1;
+			if (MPASAOS_uniqueness_check(stream_xml, stream2_xml)) return 1;
 		}
 	}
 	for (stream_xml = ezxml_child(streams, "immutable_stream"); stream_xml; stream_xml = ezxml_next(stream_xml)) {
 		for (stream2_xml = ezxml_child(streams, "stream"); stream2_xml; stream2_xml = ezxml_next(stream2_xml)) {
-			if (uniqueness_check(stream_xml, stream2_xml)) return 1;
+			if (MPASAOS_uniqueness_check(stream_xml, stream2_xml)) return 1;
 		}
 		for (stream2_xml = ezxml_child(streams, "immutable_stream"); stream2_xml; stream2_xml = ezxml_next(stream2_xml)) {
-			if (uniqueness_check(stream_xml, stream2_xml)) return 1;
+			if (MPASAOS_uniqueness_check(stream_xml, stream2_xml)) return 1;
 		}
 	}
 
@@ -593,7 +593,7 @@ int check_streams(ezxml_t streams)
  *  with a well-specified grammar.
  *
  *********************************************************************************/
-int xml_syntax_check(char *xml_buf, size_t bufsize)
+int MPASAOS_xml_syntax_check(char *xml_buf, size_t bufsize)
 {
 	size_t i;
 	size_t len;
@@ -616,7 +616,7 @@ int xml_syntax_check(char *xml_buf, size_t bufsize)
 
 	if ( xml_buf[0] == '>' ) {
 		snprintf(msgbuf, MSGSIZE, "line %i, unexpected starting \'>\' character. A file cannot start with a  \'>\' character.", line);
-		fmt_err(msgbuf);
+		MPASAOS_fmt_err(msgbuf);
 		return 1;
 	}
 
@@ -626,18 +626,18 @@ int xml_syntax_check(char *xml_buf, size_t bufsize)
 				nleftcom++;
 				if (nleftcom - nrightcom > 1) {
 					snprintf(msgbuf, MSGSIZE, "line %i, unexpected XML comment open. Is the previous XML comment missing a \'-->\'?", line);
-					fmt_err(msgbuf);
+					MPASAOS_fmt_err(msgbuf);
 					return 1;
 				} else if (nleft != nright) {
 					snprintf(msgbuf, MSGSIZE, "line %i, unexpected XML comment open. Is the previous XML tag missing a \'>\'?\n   NOTE: Comments are not allowed within an open XML tag.", line);
-					fmt_err(msgbuf);
+					MPASAOS_fmt_err(msgbuf);
 					return 1;
 				}
 			} else {
 				nleft++;
 				if (nleft - nright > 1){
 					snprintf(msgbuf, MSGSIZE, "line %i, unexpected \'<\' character. Is the previous XML tag missing a \'>\'?", line);
-					fmt_err(msgbuf);
+					MPASAOS_fmt_err(msgbuf);
 					return 1;
 				}
 			}
@@ -647,18 +647,18 @@ int xml_syntax_check(char *xml_buf, size_t bufsize)
 				nrightcom++;
 				if (nleftcom != nrightcom) {
 					snprintf(msgbuf, MSGSIZE, "line %i, unexpected XML comment close. Is the XML comment missing a \'<!--\'?", line);
-					fmt_err(msgbuf);
+					MPASAOS_fmt_err(msgbuf);
 					return 1;
 				} else if (nleft != nright) {
 					snprintf(msgbuf, MSGSIZE, "line %i, unexpected XML comment close. Is the previous XML tag missing a \'>\'?\n   NOTE: Comments are not allowed within an open XML tag.", line);
-					fmt_err(msgbuf);
+					MPASAOS_fmt_err(msgbuf);
 					return 1;
 				}
 			} else {
 				nright++;
 				if (nleft != nright) {
 					snprintf(msgbuf, MSGSIZE, "line %i, unexpected \'>\' character. Is the XML tag missing a \'<\'?", line);
-					fmt_err(msgbuf);
+					MPASAOS_fmt_err(msgbuf);
 					return 1;
 				}
 			}
@@ -668,7 +668,7 @@ int xml_syntax_check(char *xml_buf, size_t bufsize)
 		}
 	}
 	if (nleft != nright) {				  /* Probably only triggered if no final '>' character? */
-		fmt_err("unbalanced angle brackets in XML. Is the file missing a final \'>\'?");
+		MPASAOS_fmt_err("unbalanced angle brackets in XML. Is the file missing a final \'>\'?");
 		return 1;
 	}
 
@@ -691,7 +691,7 @@ int xml_syntax_check(char *xml_buf, size_t bufsize)
 		if (xml_buf[i] == '=' || xml_buf[i] == '\n') {
 			if (nleft != 0) {
 				snprintf(msgbuf, MSGSIZE, "line %i, unterminated string. Is a closing quote not present?", line);
-				fmt_err(msgbuf);
+				MPASAOS_fmt_err(msgbuf);
 				return 1;
 			}
 			if (xml_buf[i] == '\n') {
@@ -700,7 +700,7 @@ int xml_syntax_check(char *xml_buf, size_t bufsize)
 		}
 	}
 	if (nleft != 0) {
-		fmt_err("unbalanced quotes in XML.");
+		MPASAOS_fmt_err("unbalanced quotes in XML.");
 		return 1;
 	}
 
@@ -713,7 +713,7 @@ int xml_syntax_check(char *xml_buf, size_t bufsize)
 
 	line = 1;
 	do {
-		i += parse_xml_tag(&xml_buf[i], (bufsize - i), tag_buf, &len, &line, &start_line);
+		i += MPASAOS_parse_xml_tag(&xml_buf[i], (bufsize - i), tag_buf, &len, &line, &start_line);
 
 		if (len > 0) {
 
@@ -724,21 +724,21 @@ int xml_syntax_check(char *xml_buf, size_t bufsize)
 			/* An opening tag. Push it onto the stack... */
 			else if (tag_buf[0] != '/' && tag_buf[len-1] != '/') {
 				node = (struct stacknode *)malloc(sizeof(struct stacknode));
-				parse_xml_tag_name(tag_buf, node->name);
+				MPASAOS_parse_xml_tag_name(tag_buf, node->name);
 				node->line = start_line;
-				push_tag(node);
+				MPASAOS_push_tag(node);
 			}
 			/* A closing tag. Pop the stack... */
 			else if (tag_buf[0] == '/' && tag_buf[len-1] != '/') {
-				node = pop_tag();
-				parse_xml_tag_name(&tag_buf[1], tmp_node.name);    /* NB: &tag_buf[1] to skip over '/' character */
+				node = MPASAOS_pop_tag();
+				MPASAOS_parse_xml_tag_name(&tag_buf[1], tmp_node.name);    /* NB: &tag_buf[1] to skip over '/' character */
 				if (strncmp(tmp_node.name, node->name, (size_t)MSGSIZE) != 0) {
 					snprintf(msgbuf, MSGSIZE, "Found unexpected closing tag \"%s\" at line %i.", tmp_node.name, start_line);
-					fmt_err(msgbuf);
+					MPASAOS_fmt_err(msgbuf);
 					snprintf(msgbuf, MSGSIZE, "line %i, unclosed or badly nested XML tag \"%s\".", node->line, node->name);
-					fmt_err(msgbuf);
+					MPASAOS_fmt_err(msgbuf);
 
-					while ((node = pop_tag()) != NULL)
+					while ((node = MPASAOS_pop_tag()) != NULL)
 						free(node);
 					return 1;	
 				}
@@ -746,7 +746,7 @@ int xml_syntax_check(char *xml_buf, size_t bufsize)
 			}
 			/* A singleton tag. Life is simple... */
 			else if (tag_buf[0] != '/' && tag_buf[len-1] == '/') {
-				parse_xml_tag_name(tag_buf, tmp_node.name);
+				MPASAOS_parse_xml_tag_name(tag_buf, tmp_node.name);
 
 			}
 			/* Probable syntax error? */
@@ -759,12 +759,12 @@ int xml_syntax_check(char *xml_buf, size_t bufsize)
 	} while (i <= bufsize && len > 0);
 
 	/* Pop the rest of the stack for any unclosed tags */
-	node = pop_tag();
+	node = MPASAOS_pop_tag();
 	if (node != NULL) {
 		snprintf(msgbuf, MSGSIZE, "line %i, unclosed or badly nested XML tag \"%s\".", node->line, node->name);
-		fmt_err(msgbuf);
+		MPASAOS_fmt_err(msgbuf);
 		
-		while ((node = pop_tag()) != NULL)
+		while ((node = MPASAOS_pop_tag()) != NULL)
 			free(node);
 		return 1;	
 	}
@@ -784,7 +784,7 @@ int xml_syntax_check(char *xml_buf, size_t bufsize)
  *  in the template already exists but is not writable, a non-zero error is returned.
  *
  *********************************************************************************/
-int build_stream_path(const char *stream, const char *template, int *mpi_comm)
+int MPASAOS_build_stream_path(const char *stream, const char *template, int *mpi_comm)
 {
 	char *filename_path;
 	char *directory;
@@ -841,7 +841,7 @@ int build_stream_path(const char *stream, const char *template, int *mpi_comm)
 							}
 						} else if ( !writable_parent ) {
 							snprintf(msgbuf, MSGSIZE, "cannot create directory %s needed by stream \"%s\": parent directory is not writable.", directory, stream);
-							fmt_err(msgbuf);
+							MPASAOS_fmt_err(msgbuf);
 							free(filename_path);
 							free(directory);
 							writable_parent = 0;
@@ -864,7 +864,7 @@ int build_stream_path(const char *stream, const char *template, int *mpi_comm)
 				/* directory exists, need to check permissions */
 				if (access(filename_path, W_OK) != 0) {
 					snprintf(msgbuf, MSGSIZE, "definition of stream \"%s\" references directory %s without write permission.", stream, filename_path);
-					fmt_err(msgbuf);
+					MPASAOS_fmt_err(msgbuf);
 					free(filename_path);
 					free(directory);
 	
@@ -877,7 +877,7 @@ int build_stream_path(const char *stream, const char *template, int *mpi_comm)
 			}
 			else if ( !writable_parent ) {
 					snprintf(msgbuf, MSGSIZE, "cannot create directory %s needed by stream \"%s\": parent directory is not writable.", directory, stream);
-					fmt_err(msgbuf);
+					MPASAOS_fmt_err(msgbuf);
 					free(filename_path);
 					free(directory);
 					writable_parent = 0;
@@ -931,7 +931,7 @@ int build_stream_path(const char *stream, const char *template, int *mpi_comm)
  *  function returns 0.
  *
  *********************************************************************************/
-int extract_stream_interval(const char *interval, const char *interval_type, const char **interval2, const char *streamID, ezxml_t streams)
+int MPASAOS_extract_stream_interval(const char *interval, const char *interval_type, const char **interval2, const char *streamID, ezxml_t streams)
 {
 	int i;
 	int stream_found, copy_start, copy_from, copy_to;
@@ -1036,7 +1036,7 @@ int extract_stream_interval(const char *interval, const char *interval_type, con
  *  and mpi_comm is the Fortran MPI communicator used by MPAS.
  *
  *********************************************************************************/
-void xml_stream_parser(char *fname, void *manager, int *mpi_comm, int *status)
+void MPASAOS_xml_stream_parser(char *fname, void *manager, int *mpi_comm, int *status)
 {
 	char *xml_buf;
 	size_t bufsize;
@@ -1085,7 +1085,7 @@ void xml_stream_parser(char *fname, void *manager, int *mpi_comm, int *status)
 	*status = 0;
 
 	global_file = fname;
-	if (par_read(fname, mpi_comm, &xml_buf, &bufsize) != 0) {
+	if (MPASAOS_par_read(fname, mpi_comm, &xml_buf, &bufsize) != 0) {
 		*status = 1;
 		return;
 	}
@@ -1122,7 +1122,7 @@ void xml_stream_parser(char *fname, void *manager, int *mpi_comm, int *status)
 		/* Extract the input interval, if it refer to other streams */
 		if ( interval_in ) {
 			sprintf(interval_type, "input_interval");
-			*status = extract_stream_interval(interval_in, interval_type, &interval_in2, streamID, streams);
+			*status = MPASAOS_extract_stream_interval(interval_in, interval_type, &interval_in2, streamID, streams);
 			if ( *status != 0 ) {
 				return;
 			}
@@ -1131,7 +1131,7 @@ void xml_stream_parser(char *fname, void *manager, int *mpi_comm, int *status)
 		/* Extract the output interval, if it refer to other streams */
 		if ( interval_out ) {
 			sprintf(interval_type, "output_interval");
-			*status = extract_stream_interval(interval_out, interval_type, &interval_out2, streamID, streams);
+			*status = MPASAOS_extract_stream_interval(interval_out, interval_type, &interval_out2, streamID, streams);
 			if ( *status != 0 ) {
 				return;
 			}
@@ -1351,7 +1351,7 @@ void xml_stream_parser(char *fname, void *manager, int *mpi_comm, int *status)
 
 		/* For output streams, build the directory structure where files will be written */
 		if (itype == 2 || itype == 3) {
-			err = build_stream_path(streamID, filename_template, mpi_comm);
+			err = MPASAOS_build_stream_path(streamID, filename_template, mpi_comm);
 			if (err != 0) {
 				*status = 1;
 				return;
@@ -1406,7 +1406,7 @@ void xml_stream_parser(char *fname, void *manager, int *mpi_comm, int *status)
 			MPASAOS_stream_mgr_add_pkg_c(manager, streamID, package, &err);
 			if (err != 0) {
 				snprintf(msgbuf, MSGSIZE, "definition of stream \"%s\" references unrecognized package \"%s\".", streamID, package);
-				fmt_warn(msgbuf);
+				MPASAOS_fmt_warn(msgbuf);
 			}
 			else {
 				snprintf(msgbuf, MSGSIZE, "        %-20s%s\n", "package:", package);
@@ -1417,7 +1417,7 @@ void xml_stream_parser(char *fname, void *manager, int *mpi_comm, int *status)
 				MPASAOS_stream_mgr_add_pkg_c(manager, streamID, package, &err);
 				if (err != 0) {
 					snprintf(msgbuf, MSGSIZE, "definition of stream \"%s\" references unrecognized package \"%s\".", streamID, package);
-					fmt_warn(msgbuf);
+					MPASAOS_fmt_warn(msgbuf);
 				}
 				else {
 					snprintf(msgbuf, MSGSIZE, "        %-20s%s", "package:", package);
@@ -1451,7 +1451,7 @@ void xml_stream_parser(char *fname, void *manager, int *mpi_comm, int *status)
 		/* Extract the input interval, if it refer to other streams */
 		if ( interval_in ) {
 			sprintf(interval_type, "input_interval");
-			*status = extract_stream_interval(interval_in, interval_type, &interval_in2, streamID, streams);
+			*status = MPASAOS_extract_stream_interval(interval_in, interval_type, &interval_in2, streamID, streams);
 			if ( *status != 0 ) {
 				return;
 			}
@@ -1460,7 +1460,7 @@ void xml_stream_parser(char *fname, void *manager, int *mpi_comm, int *status)
 		/* Extract the output interval, if it refer to other streams */
 		if ( interval_out ) {
 			sprintf(interval_type, "output_interval");
-			*status = extract_stream_interval(interval_out, interval_type, &interval_out2, streamID, streams);
+			*status = MPASAOS_extract_stream_interval(interval_out, interval_type, &interval_out2, streamID, streams);
 			if ( *status != 0 ) {
 				return;
 			}
@@ -1681,7 +1681,7 @@ void xml_stream_parser(char *fname, void *manager, int *mpi_comm, int *status)
 
 		/* For output streams, build the directory structure where files will be written */
 		if (itype == 2 || itype == 3) {
-			err = build_stream_path(streamID, filename_template, mpi_comm);
+			err = MPASAOS_build_stream_path(streamID, filename_template, mpi_comm);
 			if (err != 0) {
 				*status = 1;
 				return;
@@ -1736,7 +1736,7 @@ void xml_stream_parser(char *fname, void *manager, int *mpi_comm, int *status)
 			MPASAOS_stream_mgr_add_pkg_c(manager, streamID, package, &err);
 			if (err != 0) {
 				snprintf(msgbuf, MSGSIZE, "definition of stream \"%s\" references unrecognized package \"%s\".", streamID, package);
-				fmt_warn(msgbuf);
+				MPASAOS_fmt_warn(msgbuf);
 			}
 			else {
 				snprintf(msgbuf, MSGSIZE, "        %-20s%s", "package:", package);
@@ -1747,7 +1747,7 @@ void xml_stream_parser(char *fname, void *manager, int *mpi_comm, int *status)
 				MPASAOS_stream_mgr_add_pkg_c(manager, streamID, package, &err);
 				if (err != 0) {
 					snprintf(msgbuf, MSGSIZE, "definition of stream \"%s\" references unrecognized package \"%s\".", streamID, package);
-					fmt_warn(msgbuf);
+					MPASAOS_fmt_warn(msgbuf);
 				}
 				else {
 					snprintf(msgbuf, MSGSIZE, "        %-20s%s", "package:", package);
@@ -1782,7 +1782,7 @@ void xml_stream_parser(char *fname, void *manager, int *mpi_comm, int *status)
 			}
 			else {
 				snprintf(msgbuf, MSGSIZE, "definition of stream \"%s\" references file %s that cannot be opened for reading.", streamID, varfile);
-				fmt_err(msgbuf);
+				MPASAOS_fmt_err(msgbuf);
 				*status = 1;
 				return;
 			}
@@ -1910,7 +1910,7 @@ void xml_stream_parser(char *fname, void *manager, int *mpi_comm, int *status)
  *  definitions, and mpi_comm is the Fortran MPI communicator used by MPAS.
  *
  *********************************************************************************/
-void xml_stream_get_attributes(char *fname, char *streamname, int *mpi_comm, char *filename, char *ref_time, char *filename_interval, char *io_type, int *status)
+void MPASAOS_xml_stream_get_attributes(char *fname, char *streamname, int *mpi_comm, char *filename, char *ref_time, char *filename_interval, char *io_type, int *status)
 {
 	char *xml_buf;
 	size_t bufsize;
@@ -1923,12 +1923,12 @@ void xml_stream_get_attributes(char *fname, char *streamname, int *mpi_comm, cha
 	*status = 0;
 
 	global_file = fname;
-	if (par_read(fname, mpi_comm, &xml_buf, &bufsize) != 0) {
+	if (MPASAOS_par_read(fname, mpi_comm, &xml_buf, &bufsize) != 0) {
 		*status = 1;
 		return;
 	}
 
-	if (xml_syntax_check(xml_buf, bufsize) != 0) {
+	if (MPASAOS_xml_syntax_check(xml_buf, bufsize) != 0) {
 		*status = 1;
 		return;
 	}
@@ -1941,7 +1941,7 @@ void xml_stream_get_attributes(char *fname, char *streamname, int *mpi_comm, cha
 		return;
 	}	
 
-	if (check_streams(streams) != 0) {
+	if (MPASAOS_check_streams(streams) != 0) {
 		*status = 1;
 		return;
 	}
