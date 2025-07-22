@@ -46,6 +46,7 @@ xlf:
 	"DEBUG = $(DEBUG)" \
 	"USE_PAPI = $(USE_PAPI)" \
 	"OPENMP = $(OPENMP)" \
+	"USE_GOTM = $(USE_GOTM)" \
 	"CPPFLAGS = $(MODEL_FORMULATION) -D_MPI" )
 
 xlf-summit-omp-offload:
@@ -76,6 +77,7 @@ xlf-summit-omp-offload:
 	"USE_PAPI = $(USE_PAPI)" \
 	"OPENMP = $(OPENMP)" \
 	"OPENMP_OFFLOAD = $(OPENMP_OFFLOAD)" \
+	"USE_GOTM = $(USE_GOTM)" \
 	"CPPFLAGS = $(MODEL_FORMULATION) -D_MPI -DFORTRAN_SAME -DCPRIBM -DLINUX" )
 
 ftn:
@@ -98,6 +100,7 @@ ftn:
 	"DEBUG = $(DEBUG)" \
 	"USE_PAPI = $(USE_PAPI)" \
 	"OPENMP = $(OPENMP)" \
+	"USE_GOTM = $(USE_GOTM)" \
 	"CPPFLAGS = $(MODEL_FORMULATION) -D_MPI" )
 
 titan-cray:
@@ -117,6 +120,7 @@ titan-cray:
 	"DEBUG = $(DEBUG)" \
 	"USE_PAPI = $(USE_PAPI)" \
 	"OPENMP = $(OPENMP)" \
+	"USE_GOTM = $(USE_GOTM)" \
 	"CPPFLAGS = $(MODEL_FORMULATION) -D_MPI" )
 
 pgi:
@@ -144,6 +148,7 @@ pgi:
 	"DEBUG = $(DEBUG)" \
 	"USE_PAPI = $(USE_PAPI)" \
 	"OPENMP = $(OPENMP)" \
+	"USE_GOTM = $(USE_GOTM)" \
 	"CPPFLAGS = $(MODEL_FORMULATION) -D_MPI -DCPRPGI" )
 
 pgi-summit:
@@ -155,16 +160,16 @@ pgi-summit:
 	"CC_SERIAL = pgcc" \
 	"CXX_SERIAL = pgc++" \
 	"FFLAGS_PROMOTION = -r8" \
-	"FFLAGS_OPT = -g -O3 -byteswapio -Mfree" \
+	"FFLAGS_OPT = -O4 -gopt -byteswapio -Mfree -Mnosave -Mrecursive -Mstack_arrays -DMPAS_NVTX_RANGES" \
 	"CFLAGS_OPT = -O3 " \
 	"CXXFLAGS_OPT = -O3 " \
-	"LDFLAGS_OPT = -O3 " \
-	"FFLAGS_ACC = -acc -Minfo=accel -ta=tesla:cc70,cc60,deepcopy,nollvm " \
-	"CFLAGS_ACC = -acc -Minfo=accel -ta=tesla:cc70,cc60,deepcopy,nollvm "  \
-	"FFLAGS_DEBUG = -O0 -g -Mbounds -Mchkptr -byteswapio -Mfree -Ktrap=divz,fp,inv,ovf -traceback" \
+	"LDFLAGS_OPT = -O3 -lnvhpcwrapnvtx" \
+	"FFLAGS_ACC = -acc=gpu -Minfo=acc -gpu=lineinfo,ccnative,safecache -cudalib=cublas " \
+	"CFLAGS_ACC = -acc=gpu -Minfo=acc -gpu=lineinfo,ccnative,safecache -cudalib=cublas " \
+	"FFLAGS_DEBUG = -O0 -g -Mbounds -Mchkptr -byteswapio -Mfree -Ktrap=divz,fp,inv,ovf -traceback -Mnosave -Mrecursive -DMPAS_NVTX_RANGES" \
 	"CFLAGS_DEBUG = -O0 -g -traceback" \
 	"CXXFLAGS_DEBUG = -O0 -g -traceback" \
-	"LDFLAGS_DEBUG = -O0 -g -Mbounds -Mchkptr -Ktrap=divz,fp,inv,ovf -traceback" \
+	"LDFLAGS_DEBUG = -O0 -g -Mbounds -Mchkptr -Ktrap=divz,fp,inv,ovf -traceback -lnvhpcwrapnvtx" \
 	"FFLAGS_OMP = -mp" \
 	"CFLAGS_OMP = -mp" \
 	"PICFLAG = -fpic" \
@@ -174,6 +179,7 @@ pgi-summit:
 	"USE_PAPI = $(USE_PAPI)" \
 	"OPENMP = $(OPENMP)" \
 	"OPENACC = $(OPENACC)" \
+	"USE_GOTM = $(USE_GOTM)" \
 	"CPPFLAGS = -DpgiFortran -D_MPI -DUNDERSCORE" )
 
 pgi-nersc:
@@ -196,6 +202,7 @@ pgi-nersc:
 	"DEBUG = $(DEBUG)" \
 	"USE_PAPI = $(USE_PAPI)" \
 	"OPENMP = $(OPENMP)" \
+	"USE_GOTM = $(USE_GOTM)" \
 	"CPPFLAGS = $(MODEL_FORMULATION) -D_MPI -DCPRPGI" )
 
 pgi-llnl:
@@ -218,6 +225,7 @@ pgi-llnl:
 	"DEBUG = $(DEBUG)" \
 	"USE_PAPI = $(USE_PAPI)" \
 	"OPENMP = $(OPENMP)" \
+	"USE_GOTM = $(USE_GOTM)" \
 	"CPPFLAGS = $(MODEL_FORMULATION) -D_MPI -DCPRPGI" )
 
 ifort:
@@ -245,6 +253,7 @@ ifort:
 	"DEBUG = $(DEBUG)" \
 	"USE_PAPI = $(USE_PAPI)" \
 	"OPENMP = $(OPENMP)" \
+	"USE_GOTM = $(USE_GOTM)" \
 	"CPPFLAGS = $(MODEL_FORMULATION) -D_MPI" )
 
 ifort-scorep:
@@ -271,6 +280,7 @@ ifort-scorep:
 	"DEBUG = $(DEBUG)" \
 	"USE_PAPI = $(USE_PAPI)" \
 	"OPENMP = $(OPENMP)" \
+	"USE_GOTM = $(USE_GOTM)" \
 	"CPPFLAGS = $(MODEL_FORMULATION) -D_MPI" )
 
 ifort-gcc:
@@ -297,6 +307,7 @@ ifort-gcc:
 	"DEBUG = $(DEBUG)" \
 	"USE_PAPI = $(USE_PAPI)" \
 	"OPENMP = $(OPENMP)" \
+	"USE_GOTM = $(USE_GOTM)" \
 	"CPPFLAGS = $(MODEL_FORMULATION) -D_MPI" )
 
 intel-mpi:
@@ -324,6 +335,7 @@ intel-mpi:
 	"DEBUG = $(DEBUG)" \
 	"USE_PAPI = $(USE_PAPI)" \
 	"OPENMP = $(OPENMP)" \
+	"USE_GOTM = $(USE_GOTM)" \
 	"CPPFLAGS = $(MODEL_FORMULATION) -D_MPI" )
 
 gfortran:
@@ -351,6 +363,7 @@ gfortran:
 	"DEBUG = $(DEBUG)" \
 	"USE_PAPI = $(USE_PAPI)" \
 	"OPENMP = $(OPENMP)" \
+	"USE_GOTM = $(USE_GOTM)" \
 	"CPPFLAGS = $(MODEL_FORMULATION) -D_MPI" )
 
 gfortran-clang:
@@ -377,6 +390,7 @@ gfortran-clang:
 	"DEBUG = $(DEBUG)" \
 	"USE_PAPI = $(USE_PAPI)" \
 	"OPENMP = $(OPENMP)" \
+	"USE_GOTM = $(USE_GOTM)" \
 	"CPPFLAGS = $(MODEL_FORMULATION) -D_MPI" )
 
 g95:
@@ -399,6 +413,7 @@ g95:
 	"DEBUG = $(DEBUG)" \
 	"USE_PAPI = $(USE_PAPI)" \
 	"OPENMP = $(OPENMP)" \
+	"USE_GOTM = $(USE_GOTM)" \
 	"CPPFLAGS = $(MODEL_FORMULATION) -D_MPI" )
 
 pathscale-nersc:
@@ -421,6 +436,7 @@ pathscale-nersc:
 	"DEBUG = $(DEBUG)" \
 	"USE_PAPI = $(USE_PAPI)" \
 	"OPENMP = $(OPENMP)" \
+	"USE_GOTM = $(USE_GOTM)" \
 	"CPPFLAGS = $(MODEL_FORMULATION) -D_MPI" )
 
 cray-nersc:
@@ -443,6 +459,7 @@ cray-nersc:
 	"DEBUG = $(DEBUG)" \
 	"USE_PAPI = $(USE_PAPI)" \
 	"OPENMP = $(OPENMP)" \
+	"USE_GOTM = $(USE_GOTM)" \
 	"CPPFLAGS = $(MODEL_FORMULATION) -D_MPI" )
 
 gnu-nersc:
@@ -467,6 +484,7 @@ gnu-nersc:
 	"DEBUG = $(DEBUG)" \
 	"SERIAL = $(SERIAL)" \
 	"USE_PAPI = $(USE_PAPI)" \
+	"USE_GOTM = $(USE_GOTM)" \
 	"CPPFLAGS = $(MODEL_FORMULATION) -D_MPI $(FILE_OFFSET) $(ZOLTAN_DEFINE)" )
 
 intel-nersc:
@@ -493,6 +511,7 @@ intel-nersc:
 	"DEBUG = $(DEBUG)" \
 	"USE_PAPI = $(USE_PAPI)" \
 	"OPENMP = $(OPENMP)" \
+	"USE_GOTM = $(USE_GOTM)" \
 	"CPPFLAGS = $(MODEL_FORMULATION) -D_MPI" )
 
 bluegene:
@@ -519,6 +538,7 @@ bluegene:
 	"DEBUG = $(DEBUG)" \
 	"USE_PAPI = $(USE_PAPI)" \
 	"OPENMP = $(OPENMP)" \
+	"USE_GOTM = $(USE_GOTM)" \
 	"CPPFLAGS = $(MODEL_FORMULATION) -D_MPI" )
 
 llvm:
@@ -546,6 +566,7 @@ llvm:
 	"DEBUG = $(DEBUG)" \
 	"USE_PAPI = $(USE_PAPI)" \
 	"OPENMP = $(OPENMP)" \
+	"USE_GOTM = $(USE_GOTM)" \
 	"CPPFLAGS = $(MODEL_FORMULATION) -D_MPI" )
 
 nag:
@@ -571,13 +592,33 @@ nag:
 	"DEBUG = $(DEBUG)" \
 	"USE_PAPI = $(USE_PAPI)" \
 	"OPENMP = $(OPENMP)" \
+	"USE_GOTM = $(USE_GOTM)" \
 	"CPPFLAGS = $(MODEL_FORMULATION) -D_MPI -DUNDERSCORE -DNAG_COMPILER" )
 
 CPPINCLUDES =
 FCINCLUDES =
 LIBS =
 
-#
+# Add links to PETSC links if requested
+ifeq "$(USE_PETSC)" "true"
+ifndef PETSC
+$(error PETSC is not set.  Please set PETSC to the PETSC install directory when USE_PETSC=true)
+endif
+ifneq (, $(shell ls $(PETSC)/lib/libpetsc.*))
+	LIBS += -L$(PETSC)/lib
+	CPPINCLUDES += -I$(PETSC)/include
+	FCINCLUDES += -I$(PETSC)/include
+else ifneq (, $(shell ls $(PETSC)/libpetsc.*))
+	LIBS += -L$(PETSC)
+	CPPINCLUDES += -I$(PETSC)
+	FCINCLUDES += -I$(PETSC)
+else
+$(error libpetsc.* does NOT exist in $(PETSC) or $(PETSC)/lib)
+endif
+	LIBS += -lpetsc
+	override CPPFLAGS += -DUSE_PETSC
+endif
+
 # If user has indicated a PIO2 library, define USE_PIO2 pre-processor macro
 #
 ifeq "$(USE_PIO2)" "true"
@@ -593,7 +634,7 @@ ifneq ($(wildcard $(PIO)/lib), )
 else
 	PIO_LIB = $(PIO)
 endif
-LIBS = -L$(PIO_LIB)
+LIBS += -L$(PIO_LIB)
 
 #
 # Regardless of PIO library version, look for an include subdirectory of PIO path
@@ -683,6 +724,28 @@ endif
 	override CPPFLAGS += -DUSE_LAPACK
 endif
 
+ifeq "$(USE_CUBLAS)" "true"
+ifndef CUBLAS
+$(error CUBLAS is not set.  Please set CUBLAS to the cuBLAS install directory when USE_CUBLAS=true)
+endif
+ifneq ($(wildcard $(CUBLAS)/libcublas.*), )
+	LIBS += -L$(CUBLAS)
+else ifneq ($(wildcard $(CUBLAS)/lib/libcublas.*), )
+	LIBS += -L$(CUBLAS)/lib
+else ifneq ($(wildcard $(CUBLAS)/lib64/libcublas.*), )
+	LIBS += -L$(CUBLAS)/lib64
+else
+$(error libcublas.* does NOT exist in $(CUBLAS) or $(CUBLAS)/lib or $(CUBLAS)/lib64)
+endif
+	LIBS += -lcublas
+	FCINCLUDES += -I$(CUBLAS)/include
+	override CPPFLAGS += -DUSE_CUBLAS
+endif
+
+ifeq "$(USE_GOTM)" "true"
+	override CPPFLAGS += -DUSE_GOTM
+endif
+
 RM = rm -f
 CPP = cpp -P -traditional
 RANLIB = ranlib
@@ -743,6 +806,8 @@ SCC=$(CC_SERIAL)
 PARALLEL_MESSAGE="Parallel version is on."
 
 ifeq "$(OPENMP)" "true"
+	CPPINCLUDES += $(OPENMP_INCLUDE)
+	FCINCLUDES += $(OPENMP_INCLUDE)
 	FFLAGS += $(FFLAGS_OMP)
 	CFLAGS += $(CFLAGS_OMP)
 	CXXFLAGS += $(CFLAGS_OMP)
@@ -868,6 +933,18 @@ else
 	OPENACC_MESSAGE="MPAS was built without OpenACC accelerator support."
 endif
 
+ifeq "$(USE_CUBLAS)" "true"
+	CUBLAS_MESSAGE="MPAS was built with cuBLAS support enabled."
+else
+	CUBLAS_MESSAGE="MPAS was built without cuBLAS support."
+endif
+
+ifeq "$(USE_GOTM)" "true"
+	GOTM_MESSAGE="MPAS was built with GOTM library."
+else
+	GOTM_MESSAGE="MPAS was built without GOTM library."
+endif
+
 ifneq ($(wildcard .mpas_core_*), ) # CHECK FOR BUILT CORE
 
 ifneq ($(wildcard .mpas_core_$(CORE)), ) # CHECK FOR SAME CORE AS ATTEMPTED BUILD.
@@ -950,15 +1027,15 @@ endif
 openmp_test:
 ifeq "$(OPENMP)" "true"
 	@echo "Testing compiler for OpenMP support"
-	@echo "#include <omp.h>" > conftest.c; echo "int main() { int n = omp_get_num_threads(); return 0; }" >> conftest.c; $(SCC) $(CFLAGS) -o conftest.out conftest.c || \
+	@echo "#include <omp.h>" > conftest.c; echo "int main() { int n = omp_get_num_threads(); return 0; }" >> conftest.c; $(SCC) $(OPENMP_INCLUDE) $(CFLAGS) -o conftest.out conftest.c || \
 		(echo "$(SCC) does not support OpenMP - see INSTALL in top-level directory for more information"; rm -fr conftest.*; exit 1)
-	@echo "#include <omp.h>" > conftest.c; echo "int main() { int n = omp_get_num_threads(); return 0; }" >> conftest.c; $(CC) $(CFLAGS) -o conftest.out conftest.c || \
+	@echo "#include <omp.h>" > conftest.c; echo "int main() { int n = omp_get_num_threads(); return 0; }" >> conftest.c; $(CC) $(OPENMP_INCLUDE) $(CFLAGS) -o conftest.out conftest.c || \
 		(echo "$(CC) does not support OpenMP - see INSTALL in top-level directory for more information"; rm -fr conftest.*; exit 1)
-	@echo "#include <omp.h>" > conftest.cpp; echo "int main() { int n = omp_get_num_threads(); return 0; }" >> conftest.cpp; $(CXX) $(CFLAGS) -o conftest.out conftest.cpp || \
+	@echo "#include <omp.h>" > conftest.cpp; echo "int main() { int n = omp_get_num_threads(); return 0; }" >> conftest.cpp; $(CXX) $(OPENMP_INCLUDE) $(CXXFLAGS) -o conftest.out conftest.cpp || \
 		(echo "$(CXX) does not support OpenMP - see INSTALL in top-level directory for more information"; rm -fr conftest.*; exit 1)
-	@echo "program test; use omp_lib; integer n; n = OMP_GET_NUM_THREADS(); stop 0; end program" > conftest.f90; $(SFC) $(FFLAGS) -o conftest.out conftest.f90 || \
+	@echo "program test; use omp_lib; integer n; n = OMP_GET_NUM_THREADS(); stop 0; end program" > conftest.f90; $(SFC) $(OPENMP_INCLUDE) $(FFLAGS) -o conftest.out conftest.f90 || \
 		(echo "$(SFC) does not support OpenMP - see INSTALL in top-level directory for more information"; rm -fr conftest.*; exit 1)
-	@echo "program test; use omp_lib; integer n; n = OMP_GET_NUM_THREADS(); stop 0; end program" > conftest.f90; $(FC) $(FFLAGS) -o conftest.out conftest.f90 || \
+	@echo "program test; use omp_lib; integer n; n = OMP_GET_NUM_THREADS(); stop 0; end program" > conftest.f90; $(FC) $(OPENMP_INCLUDE) $(FFLAGS) -o conftest.out conftest.f90 || \
 		(echo "$(FC) does not support OpenMP - see INSTALL in top-level directory for more information"; rm -fr conftest.*; exit 1)
 	@rm -fr conftest.*
 endif
@@ -1096,6 +1173,7 @@ endif
 	@echo $(OPENMP_MESSAGE)
 	@echo $(OPENMP_OFFLOAD_MESSAGE)
 	@echo $(OPENACC_MESSAGE)
+	@echo $(CUBLAS_MESSAGE)
 	@echo $(SHAREDLIB_MESSAGE)
 ifeq "$(AUTOCLEAN)" "true"
 	@echo $(AUTOCLEAN_MESSAGE)
@@ -1103,6 +1181,7 @@ endif
 	@echo $(GEN_F90_MESSAGE)
 	@echo $(TIMER_MESSAGE)
 	@echo $(PIO_MESSAGE)
+	@echo $(GOTM_MESSAGE)
 	@echo "*******************************************************************************"
 clean:
 	cd $(FWPATH); $(MAKE) clean RM="$(RM)" CORE="$(CORE)"
@@ -1174,8 +1253,10 @@ errmsg:
 	@echo "    PRECISION=single - builds with default single-precision real kind. Default is to use double-precision."
 	@echo "    SHAREDLIB=true - generate position-independent code suitable for use in a shared library. Default is false."
 	@echo "    USE_LAPACK=true - builds and links with LAPACK / BLAS libraries.  Default is to not use LAPACK."
+	@echo "    USE_CUBLAS=true - builds and links with cuBLAS libraries.  Default is to not use cuBLAS."
+	@echo "    USE_GOTM=true - builds and links with GOTM library.  Default is false."
 	@echo ""
-	@echo "Ensure that NETCDF, PNETCDF, PIO, LAPACK (if USE_LAPACK=true), and PAPI (if USE_PAPI=true) are environment variables"
+	@echo "Ensure that NETCDF, PNETCDF, PIO, LAPACK (if USE_LAPACK=true), cuBLAS (if USE_CUBLAS=true) and PAPI (if USE_PAPI=true) are environment variables"
 	@echo "that point to the absolute paths for the libraries."
 	@echo ""
 ifdef CORE
