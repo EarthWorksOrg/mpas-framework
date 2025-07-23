@@ -8516,6 +8516,8 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
           exchListPtr => fieldCursor % sendList % halos(haloLayer) % exchList
           do while ( associated(exchListPtr) )
             if ( exchListPtr % endPointID == commListPtr % procID ) then
+!$acc enter data copyin(fieldCursor % array)
+!$acc update host(fieldCursor % array)
               do iExch = 1, exchListPtr % nList
                  iBuffer = exchListPtr % destList(iExch) + bufferOffset
                  commListPtr % rbuffer(iBuffer) = transfer(fieldCursor % array(exchListPtr % srcList(iExch)), commListPtr % rbuffer(1))
@@ -8585,6 +8587,8 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
           exchListPtr => fieldCursor % sendList % halos(haloLayer) % exchList
           do while ( associated(exchListPtr) )
             if ( exchListPtr % endPointID == commListPtr % procID ) then
+!$acc enter data copyin(fieldCursor % array)
+!$acc update host(fieldCursor % array)
               do iExch = 1, exchListPtr % nList
                 do j = 1, fieldCursor % dimSizes(1)
                   iBuffer = (exchListPtr % destList(iExch)-1) * fieldCursor % dimSizes(1) + j + bufferOffset
@@ -8657,6 +8661,8 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
           exchListPtr => fieldCursor % sendList % halos(haloLayer) % exchList
           do while ( associated(exchListPtr) )
             if ( exchListPtr % endPointID == commListPtr % procID ) then
+!$acc enter data copyin(fieldCursor % array)
+!$acc update host(fieldCursor % array)
               do iExch = 1, exchListPtr % nList
                 do j = 1, fieldCursor % dimSizes(2)
                   do k = 1, fieldCursor % dimSizes(1)
@@ -8731,6 +8737,8 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
           exchListPtr => fieldCursor % sendList % halos(haloLayer) % exchList
           do while ( associated(exchListPtr) )
             if ( exchListPtr % endPointID == commListPtr % procID ) then
+!$acc enter data copyin(fieldCursor % array)
+!$acc update host(fieldCursor % array)
               do iExch = 1, exchListPtr % nList
                 iBuffer = exchListPtr % destList(iExch) + bufferOffset
                 commListPtr % rbuffer(iBuffer) = fieldCursor % array(exchListPtr % srcList(iExch))
@@ -8800,6 +8808,8 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
           exchListPtr => fieldCursor % sendList % halos(haloLayer) % exchList
           do while ( associated(exchListPtr) )
             if ( exchListPtr % endPointID == commListPtr % procID ) then
+!$acc enter data copyin(fieldCursor % array)
+!$acc update host(fieldCursor % array)
               do iExch = 1, exchListPtr % nList
                 do j = 1, fieldCursor % dimSizes(1)
                   iBuffer = (exchListPtr % destList(iExch)-1) * fieldCursor % dimSizes(1) + j + bufferOffset
@@ -8871,6 +8881,8 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
            exchListPtr => fieldCursor % sendList % halos(haloLayer) % exchList
            do while ( associated(exchListPtr) )
              if ( exchListPtr % endPointID == commListPtr % procID ) then
+!$acc enter data copyin(fieldCursor % array)
+!$acc update host(fieldCursor % array)
                do iExch = 1, exchListPtr % nList
                  do j = 1, fieldCursor % dimSizes(2)
                    do k = 1, fieldCursor % dimSizes(1)
@@ -8945,6 +8957,8 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
           exchListPtr => fieldCursor % sendList % halos(haloLayer) % exchList
           do while ( associated(exchListPtr) )
             if ( exchListPtr % endPointID == commListPtr % procID ) then
+!$acc enter data copyin(fieldCursor % array)
+!$acc update host(fieldCursor % array)
               do iExch = 1, exchListPtr % nList
                 do j = 1, fieldCursor % dimSizes(3)
                   do k = 1, fieldCursor % dimSizes(2)
@@ -9022,6 +9036,8 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
           exchListPtr => fieldCursor % sendList % halos(haloLayer) % exchList
           do while ( associated(exchListPtr) )
             if ( exchListPtr % endPointID == commListPtr % procID ) then
+!$acc enter data copyin(fieldCursor % array)
+!$acc update host(fieldCursor % array)
               do iExch = 1, exchListPtr % nList
                 do j = 1, fieldCursor % dimSizes(4)
                   do k = 1, fieldCursor % dimSizes(3)
@@ -9090,11 +9106,13 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
             fieldCursor2 => field
             do while ( associated(fieldCursor2) )
                if ( exchListPtr % endPointID == fieldCursor2 % block % localBlockID ) then
+!$acc update host(fieldCursor2 % array, fieldCursor % array)
                   !$omp do schedule(runtime)
                   do iExch = 1, exchListPtr % nList
                      fieldCursor2 % array(exchListPtr % destList(iExch)) = fieldCursor % array(exchListPtr % srcList(iExch))
                   end do
                   !$omp end do
+!$acc update device(fieldCursor2 % array, fieldCursor % array)
                end if
 
                fieldCursor2 => fieldCursor2 % next
@@ -9145,11 +9163,13 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
             fieldCursor2 => field
             do while ( associated(fieldCursor2) )
                if ( exchListPtr % endPointID == fieldCursor2 % block % localBlockID ) then
+!$acc update host(fieldCursor2 % array, fieldCursor % array)
                   !$omp do schedule(runtime)
                   do iExch = 1, exchListPtr % nList
                      fieldCursor2 % array(:, exchListPtr % destList(iExch)) = fieldCursor % array(:, exchListPtr % srcList(iExch))
                   end do
                   !$omp end do
+!$acc update device(fieldCursor2 % array, fieldCursor % array)
                end if
 
                fieldCursor2 => fieldCursor2 % next
@@ -9200,12 +9220,14 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
             fieldCursor2 => field
             do while ( associated(fieldCursor2) )
                if ( exchListPtr % endPointID == fieldCursor2 % block % localBlockID ) then
+!$acc update host(fieldCursor2 % array, fieldCursor % array)
                   !$omp do schedule(runtime)
                   do iExch = 1, exchListPtr % nList
                      fieldCursor2 % array(:, :, exchListPtr % destList(iExch)) = &
                                   fieldCursor % array(:, :, exchListPtr % srcList(iExch))
                   end do
                   !$omp end do
+!$acc update device(fieldCursor2 % array, fieldCursor % array)
                end if
 
                fieldCursor2 => fieldCursor2 % next
@@ -9256,11 +9278,13 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
             fieldCursor2 => field
             do while ( associated(fieldCursor2) )
                if ( exchListPtr % endPointID == fieldCursor2 % block % localBlockID ) then
+!$acc update host(fieldCursor2 % array, fieldCursor % array)
                   !$omp do schedule(runtime)
                   do iExch = 1, exchListPtr % nList
                      fieldCursor2 % array(exchListPtr % destList(iExch)) = fieldCursor % array(exchListPtr % srcList(iExch))
                   end do
                   !$omp end do
+!$acc update device(fieldCursor2 % array, fieldCursor % array)
                end if
 
                fieldCursor2 => fieldCursor2 % next
@@ -9311,11 +9335,13 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
             fieldCursor2 => field
             do while ( associated(fieldCursor2) )
                if ( exchListPtr % endPointID == fieldCursor2 % block % localBlockID ) then
+!$acc update host(fieldCursor2 % array, fieldCursor % array)
                   !$omp do schedule(runtime)
                   do iExch = 1, exchListPtr % nList
                      fieldCursor2 % array(:, exchListPtr % destList(iExch)) = fieldCursor % array(:, exchListPtr % srcList(iExch))
                   end do
                   !$omp end do
+!$acc update device(fieldCursor2 % array, fieldCursor % array)
                end if
 
                fieldCursor2 => fieldCursor2 % next
@@ -9366,12 +9392,14 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
             fieldCursor2 => field
             do while ( associated(fieldCursor2) )
                if(exchListPtr % endPointID == fieldCursor2 % block % localBlockID) then
+!$acc update host(fieldCursor2 % array, fieldCursor % array)
                   !$omp do schedule(runtime)
                   do iExch = 1, exchListPtr % nList
                      fieldCursor2 % array(:, :, exchListPtr % destList(iExch)) = &
                                   fieldCursor % array(:, :, exchListPtr % srcList(iExch))
                   end do
                   !$omp end do
+!$acc update device(fieldCursor2 % array, fieldCursor % array)
                end if
 
                fieldCursor2 => fieldCursor2 % next
@@ -9422,12 +9450,14 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
             fieldCursor2 => field
             do while ( associated(fieldCursor2) )
                if ( exchListPtr % endPointID == fieldCursor2 % block % localBlockID ) then
+!$acc update host(fieldCursor2 % array, fieldCursor % array)
                   !$omp do schedule(runtime)
                   do iExch = 1, exchListPtr % nList
                      fieldCursor2 % array(:, :, :, exchListPtr % destList(iExch)) = &
                                   fieldCursor % array(:, :, :, exchListPtr % srcList(iExch))
                   end do
                   !$omp end do
+!$acc update device(fieldCursor2 % array, fieldCursor % array)
                end if
 
                fieldCursor2 => fieldCursor2 % next
@@ -9478,12 +9508,14 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
             fieldCursor2 => field
             do while ( associated(fieldCursor2) )
                if ( exchListPtr % endPointID == fieldCursor2 % block % localBlockID ) then
+!$acc update host(fieldCursor2 % array, fieldCursor % array)
                   !$omp do schedule(runtime)
                   do iExch = 1, exchListPtr % nList
                      fieldCursor2 % array(:, :, :, :, exchListPtr % destList(iExch)) = &
                                   fieldCursor % array(:, :, :, :, exchListPtr % srcList(iExch))
                   end do
                   !$omp end do
+!$acc update device(fieldCursor2 % array, fieldCursor % array)
                end if
 
                fieldCursor2 => fieldCursor2 % next
@@ -9552,6 +9584,7 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
                                                                                 fieldCursor % array(1))
                end do
                !$omp end do
+!$acc update device(fieldCursor % array)
                nAdded = max(nAdded, maxval(exchListPtr % srcList))
             end if
             exchListPtr => exchListPtr % next
@@ -9617,6 +9650,7 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
                   end do
                end do
                !$omp end do
+!$acc update device(fieldCursor % array)
                nAdded = max(nAdded, maxval(exchListPtr % srcList) * fieldCursor % dimSizes(1))
             end if
             exchListPtr => exchListPtr % next
@@ -9685,6 +9719,7 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
                   end do
                end do
                !$omp end do
+!$acc update device(fieldCursor % array)
                nAdded = max(nAdded, maxval(exchListPtr % srcList) * fieldCursor % dimSizes(1) * fieldCursor % dimSizes(2))
             end if
             exchListPtr => exchListPtr % next
@@ -9746,6 +9781,7 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
                   fieldCursor % array(exchListPtr % destList(iExch)) = recvList % rbuffer(iBuffer)
                end do
                !$omp end do
+!$acc update device(fieldCursor % array)
                nAdded = max(nAdded, maxval(exchListPtr % srcList))
             end if
             exchListPtr => exchListPtr % next
@@ -9810,6 +9846,7 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
                   end do
                end do
                !$omp end do
+!$acc update device(fieldCursor % array)
                nAdded = max(nAdded, maxval(exchListPtr % srcList) * fieldCursor % dimSizes(1))
             end if
             exchListPtr => exchListPtr % next
@@ -9877,6 +9914,7 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
                   end do
                end do
                !$omp end do
+!$acc update device(fieldCursor % array)
                nAdded = max(nAdded, maxval(exchListPtr % srcList) * fieldCursor % dimSizes(1) * fieldCursor % dimSizes(2))
             end if
             exchListPtr => exchListPtr % next
@@ -9948,6 +9986,7 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
                   end do
                end do
                !$omp end do
+!$acc update device(fieldCursor % array)
                nAdded = max(nAdded, maxval(exchListPtr % srcList) * fieldCursor % dimSizes(1) &
                       * fieldCursor % dimSizes(2) * fieldCursor % dimSizes(3))
             end if
@@ -10024,6 +10063,7 @@ subroutine mpas_dmpar_get_exch_list(haloLayer, ownedListField, neededListField, 
                   end do
                end do
                !$omp end do
+!$acc update device(fieldCursor % array)
                nAdded = max(nAdded, maxval(exchListPtr % srcList) * fieldCursor % dimSizes(1) * fieldCursor % dimSizes(2) &
                       * fieldCursor % dimSizes(3) * fieldCursor % dimSizes(4))
             end if
