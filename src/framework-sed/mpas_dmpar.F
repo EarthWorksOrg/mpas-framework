@@ -91,6 +91,7 @@ include 'mpif.h'
    public :: mpas_dmpar_min_int_array
    public :: mpas_dmpar_max_int_array
    public :: mpas_dmpar_sum_real_array
+   public :: mpas_dmpar_sum_real_array_gpu
    public :: mpas_dmpar_min_real_array
    public :: mpas_dmpar_max_real_array
    public :: mpas_dmpar_scatter_ints
@@ -1294,6 +1295,38 @@ include 'mpif.h'
       end if
 
    end subroutine mpas_dmpar_sum_real_array!}}}
+
+   subroutine mpas_dmpar_sum_real_array_gpu(dminfo, nElements, inArray, outArray)!{{{
+
+      implicit none
+
+      type (dm_info), intent(in) :: dminfo !< Input: Domain information
+      integer, intent(in) :: nElements !< Input: Length of arrays
+      real(kind=RKIND), dimension(nElements), intent(in) :: inArray !< Input: Array of reals
+      real(kind=RKIND), dimension(nElements), intent(out) :: outArray !< Output: Array of real sums
+
+      integer :: mpi_ierr, threadNum, k
+
+      threadNum = mpas_threading_get_thread_num()
+
+      if ( threadNum == 0 ) then
+!$acc data present(outArray,inArray)
+#ifdef _MPI
+!$acc host_data use_device(inArray,outArray)
+         call MPI_Allreduce(inArray, outArray, nElements, MPI_REALKIND, MPI_SUM, dminfo % comm, mpi_ierr)
+!$acc end host_data
+#else
+!$acc parallel
+!$acc loop gang vector     
+         do k = 1, nElements
+            outArray(k) = inArray(k)
+         enddo
+!$acc end parallel
+#endif
+!$acc end data
+      end if
+
+   end subroutine mpas_dmpar_sum_real_array_gpu!}}}
 
 !-----------------------------------------------------------------------
 !  routine mpas_dmpar_min_real_array
