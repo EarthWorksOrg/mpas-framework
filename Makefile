@@ -155,16 +155,16 @@ pgi-summit:
 	"CC_SERIAL = pgcc" \
 	"CXX_SERIAL = pgc++" \
 	"FFLAGS_PROMOTION = -r8" \
-	"FFLAGS_OPT = -g -O3 -byteswapio -Mfree" \
+	"FFLAGS_OPT = -O4 -gopt -byteswapio -Mfree -Mnosave -Mrecursive -Mstack_arrays -DMPAS_NVTX_RANGES" \
 	"CFLAGS_OPT = -O3 " \
 	"CXXFLAGS_OPT = -O3 " \
-	"LDFLAGS_OPT = -O3 " \
-	"FFLAGS_ACC = -acc -Minfo=accel -ta=tesla:cc70,cc60,deepcopy,nollvm " \
-	"CFLAGS_ACC = -acc -Minfo=accel -ta=tesla:cc70,cc60,deepcopy,nollvm "  \
-	"FFLAGS_DEBUG = -O0 -g -Mbounds -Mchkptr -byteswapio -Mfree -Ktrap=divz,fp,inv,ovf -traceback" \
+	"LDFLAGS_OPT = -O3 -lnvhpcwrapnvtx" \
+	"FFLAGS_ACC = -acc=gpu -Minfo=acc -gpu=lineinfo,ccnative,safecache -cudalib=cublas " \
+	"CFLAGS_ACC = -acc=gpu -Minfo=acc -gpu=lineinfo,ccnative,safecache -cudalib=cublas " \
+	"FFLAGS_DEBUG = -O0 -g -Mbounds -Mchkptr -byteswapio -Mfree -Ktrap=divz,fp,inv,ovf -traceback -Mnosave -Mrecursive -DMPAS_NVTX_RANGES" \
 	"CFLAGS_DEBUG = -O0 -g -traceback" \
 	"CXXFLAGS_DEBUG = -O0 -g -traceback" \
-	"LDFLAGS_DEBUG = -O0 -g -Mbounds -Mchkptr -Ktrap=divz,fp,inv,ovf -traceback" \
+	"LDFLAGS_DEBUG = -O0 -g -Mbounds -Mchkptr -Ktrap=divz,fp,inv,ovf -traceback -lnvhpcwrapnvtx" \
 	"FFLAGS_OMP = -mp" \
 	"CFLAGS_OMP = -mp" \
 	"PICFLAG = -fpic" \
@@ -593,7 +593,7 @@ ifneq ($(wildcard $(PIO)/lib), )
 else
 	PIO_LIB = $(PIO)
 endif
-LIBS = -L$(PIO_LIB)
+LIBS += -L$(PIO_LIB)
 
 #
 # Regardless of PIO library version, look for an include subdirectory of PIO path
@@ -1103,6 +1103,7 @@ endif
 	@echo $(GEN_F90_MESSAGE)
 	@echo $(TIMER_MESSAGE)
 	@echo $(PIO_MESSAGE)
+	@echo $(GOTM_MESSAGE)
 	@echo "*******************************************************************************"
 clean:
 	cd $(FWPATH); $(MAKE) clean RM="$(RM)" CORE="$(CORE)"
@@ -1175,7 +1176,7 @@ errmsg:
 	@echo "    SHAREDLIB=true - generate position-independent code suitable for use in a shared library. Default is false."
 	@echo "    USE_LAPACK=true - builds and links with LAPACK / BLAS libraries.  Default is to not use LAPACK."
 	@echo ""
-	@echo "Ensure that NETCDF, PNETCDF, PIO, LAPACK (if USE_LAPACK=true), and PAPI (if USE_PAPI=true) are environment variables"
+	@echo "Ensure that NETCDF, PNETCDF, PIO, LAPACK (if USE_LAPACK=true) and PAPI (if USE_PAPI=true) are environment variables"
 	@echo "that point to the absolute paths for the libraries."
 	@echo ""
 ifdef CORE
