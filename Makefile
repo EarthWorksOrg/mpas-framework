@@ -683,24 +683,6 @@ endif
 	override CPPFLAGS += -DUSE_LAPACK
 endif
 
-ifeq "$(USE_CUBLAS)" "true"
-ifndef CUBLAS
-$(error CUBLAS is not set.  Please set CUBLAS to the cuBLAS install directory when USE_CUBLAS=true)
-endif
-ifneq ($(wildcard $(CUBLAS)/libcublas.*), )
-	LIBS += -L$(CUBLAS)
-else ifneq ($(wildcard $(CUBLAS)/lib/libcublas.*), )
-	LIBS += -L$(CUBLAS)/lib
-else ifneq ($(wildcard $(CUBLAS)/lib64/libcublas.*), )
-	LIBS += -L$(CUBLAS)/lib64
-else
-$(error libcublas.* does NOT exist in $(CUBLAS) or $(CUBLAS)/lib or $(CUBLAS)/lib64)
-endif
-	LIBS += -lcublas
-	FCINCLUDES += -I$(CUBLAS)/include
-	override CPPFLAGS += -DUSE_CUBLAS
-endif
-
 RM = rm -f
 CPP = cpp -P -traditional
 RANLIB = ranlib
@@ -884,12 +866,6 @@ ifeq "$(OPENACC)" "true"
 	OPENACC_MESSAGE="MPAS was built with OpenACC accelerator support enabled."
 else
 	OPENACC_MESSAGE="MPAS was built without OpenACC accelerator support."
-endif
-
-ifeq "$(USE_CUBLAS)" "true"
-	CUBLAS_MESSAGE="MPAS was built with cuBLAS support enabled."
-else
-	CUBLAS_MESSAGE="MPAS was built without cuBLAS support."
 endif
 
 ifneq ($(wildcard .mpas_core_*), ) # CHECK FOR BUILT CORE
@@ -1120,7 +1096,6 @@ endif
 	@echo $(OPENMP_MESSAGE)
 	@echo $(OPENMP_OFFLOAD_MESSAGE)
 	@echo $(OPENACC_MESSAGE)
-	@echo $(CUBLAS_MESSAGE)
 	@echo $(SHAREDLIB_MESSAGE)
 ifeq "$(AUTOCLEAN)" "true"
 	@echo $(AUTOCLEAN_MESSAGE)
@@ -1200,9 +1175,8 @@ errmsg:
 	@echo "    PRECISION=single - builds with default single-precision real kind. Default is to use double-precision."
 	@echo "    SHAREDLIB=true - generate position-independent code suitable for use in a shared library. Default is false."
 	@echo "    USE_LAPACK=true - builds and links with LAPACK / BLAS libraries.  Default is to not use LAPACK."
-	@echo "    USE_CUBLAS=true - builds and links with cuBLAS libraries.  Default is to not use cuBLAS."
 	@echo ""
-	@echo "Ensure that NETCDF, PNETCDF, PIO, LAPACK (if USE_LAPACK=true), cuBLAS (if USE_CUBLAS=true) and PAPI (if USE_PAPI=true) are environment variables"
+	@echo "Ensure that NETCDF, PNETCDF, PIO, LAPACK (if USE_LAPACK=true) and PAPI (if USE_PAPI=true) are environment variables"
 	@echo "that point to the absolute paths for the libraries."
 	@echo ""
 ifdef CORE
